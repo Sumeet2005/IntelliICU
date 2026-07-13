@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import { AuthProvider } from "./context/AuthContext";
 import AuthGuard from "./components/auth/AuthGuard";
+import PermissionGuard from "./components/auth/PermissionGuard";
 
 export default function App() {
   return (
@@ -31,11 +32,46 @@ export default function App() {
             }
           >
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/patients/:patientId" element={<PatientProfile />} />
-            <Route path="/monitoring" element={<Monitoring />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route
+              path="/dashboard"
+              element={
+                <PermissionGuard requiredPermission="Dashboard" showFallback>
+                  <Dashboard />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="/patients/:patientId"
+              element={
+                <PermissionGuard requiredPermission="Patients" showFallback>
+                  <PatientProfile />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="/monitoring"
+              element={
+                <PermissionGuard requiredPermission="Patients" showFallback>
+                  <Monitoring />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <PermissionGuard requiredPermission="Analytics" showFallback>
+                  <Analytics />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <PermissionGuard requiredPermission="Settings" showFallback>
+                  <Settings />
+                </PermissionGuard>
+              }
+            />
           </Route>
         </Routes>
       </BrowserRouter>

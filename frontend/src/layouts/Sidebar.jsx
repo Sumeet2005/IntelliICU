@@ -8,16 +8,21 @@ import {
   Settings,
 } from "lucide-react";
 
+import { usePermission } from "../hooks/usePermission";
+
 const menu = [
-  { icon: LayoutDashboard, title: "Dashboard", path: "/dashboard" },
-  { icon: Users, title: "Patients", path: "/dashboard" },
-  { icon: Activity, title: "Live Monitoring", path: "/monitoring" },
-  { icon: BrainCircuit, title: "AI Assistant", path: "/dashboard" },
-  { icon: BarChart3, title: "Analytics", path: "/analytics" },
-  { icon: Settings, title: "Settings", path: "/settings" },
+  { icon: LayoutDashboard, title: "Dashboard", path: "/dashboard", permission: "Dashboard" },
+  { icon: Users, title: "Patients", path: "/dashboard", permission: "Patients" },
+  { icon: Activity, title: "Live Monitoring", path: "/monitoring", permission: "Patients" },
+  { icon: BrainCircuit, title: "AI Assistant", path: "/dashboard", permission: "ClinicalAI" },
+  { icon: BarChart3, title: "Analytics", path: "/analytics", permission: "Analytics" },
+  { icon: Settings, title: "Settings", path: "/settings", permission: "Settings" },
 ];
 
 export default function Sidebar() {
+  const { hasPermission } = usePermission();
+  const visibleMenu = menu.filter(item => !item.permission || hasPermission(item.permission));
+
   return (
     <aside className="flex w-72 flex-col bg-[#07233F] text-white">
       <div className="border-b border-slate-700 px-8 py-8">
@@ -26,7 +31,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="mt-8 flex-1">
-        {menu.map((item) => {
+        {visibleMenu.map((item) => {
           const Icon = item.icon;
 
           return (

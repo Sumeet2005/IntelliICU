@@ -19,6 +19,7 @@ from app.api.alerts import router as alerts_router
 from app.api import patient_profile
 from app.api.timeline_routes import router as timeline_router
 from app.api.auth import router as auth_router
+from app.api.rbac import router as rbac_router
 
 # =====================================================
 # WebSocket Routers
@@ -118,6 +119,11 @@ app.include_router(
 
 app.include_router(
     auth_router,
+    prefix="/api",
+)
+
+app.include_router(
+    rbac_router,
     prefix="/api",
 )
 

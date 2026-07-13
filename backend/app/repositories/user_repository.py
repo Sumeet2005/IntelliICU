@@ -5,14 +5,14 @@ def hash_pw(password: str) -> str:
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
-# Isolated mock user data for easy future PostgreSQL migration
+# Seed user roles aligned with Phase 7.2 RBAC Role Matrix
 MOCK_USERS = {
     "admin": {
         "id": "usr-1",
         "username": "admin",
         "email": "admin@intelliicu.org",
         "hashed_password": hash_pw("admin123"),
-        "role": "Admin",
+        "role": "HospitalAdmin",
         "is_active": True
     },
     "reyes": {
@@ -20,7 +20,7 @@ MOCK_USERS = {
         "username": "reyes",
         "email": "reyes@intelliicu.org",
         "hashed_password": hash_pw("intensivist123"),
-        "role": "Intensivist",
+        "role": "ICUManager",
         "is_active": True
     },
     "miller": {
@@ -28,7 +28,7 @@ MOCK_USERS = {
         "username": "miller",
         "email": "miller@intelliicu.org",
         "hashed_password": hash_pw("miller123"),
-        "role": "Intensivist",
+        "role": "Doctor",
         "is_active": True
     }
 }
