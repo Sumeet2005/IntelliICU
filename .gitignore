@@ -1,0 +1,55 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+frontend/node_modules/
+smart-icu-kaggle/frontend/node_modules/
+
+# Nested project
+smart-icu-kaggle/
+
+# ML Models
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.onnx
+backend/ml_models/
+models/
+
+# Data
+*.csv
+*.parquet
+ml/data/
+data/
+
+# Vector DB
+backend/vector_db/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+smart-icu-kaggle/
+.venv/
+node_modules/
+frontend/node_modules/
+smart-icu-kaggle/
+backend/vector_db/
+ml/
+models/
+data/
+notebooks/
+*.pkl
+*.parquet
+*.csv
+.env
