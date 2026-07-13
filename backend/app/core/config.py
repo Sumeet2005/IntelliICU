@@ -29,6 +29,11 @@ class Settings(BaseSettings):
 
     DEBUG: bool = True
 
+    AUTH_SECRET_KEY: str = "intelliicu_super_secret_key_change_me_in_production"
+    AUTH_ALGORITHM: str = "HS256"
+    AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    AUTH_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
     # ----------------------------
     # Database
     # ----------------------------

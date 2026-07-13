@@ -1,3 +1,1 @@
-"""
-Core package for IntelliICU backend.
-"""
+# core package init
