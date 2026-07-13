@@ -26,7 +26,14 @@ connect(channel, url) {
     if (state.socket) return;
     if (url) state.url = url;
 
-    state.socket = new WebSocket(state.url);
+    try {
+        state.socket = new WebSocket(state.url);
+    } catch (e) {
+        state.connected = false;
+        state.socket = null;
+        this._reconnect(channel);
+        return;
+    }
 
     state.socket.onopen = () => {
         console.log("✅ WebSocket Connected: " + channel);
@@ -43,12 +50,11 @@ connect(channel, url) {
                 this.emit(channel, data.type, data);
             }
         } catch (error) {
-            console.error("WebSocket Parse Error on channel " + channel, error);
+            // Quiet parse error
         }
     };
 
     state.socket.onclose = () => {
-        console.log("❌ WebSocket Closed: " + channel);
         state.connected = false;
         this.emit(channel, "disconnected");
         state.socket = null;
@@ -56,7 +62,7 @@ connect(channel, url) {
     };
 
     state.socket.onerror = (error) => {
-        console.error("WebSocket Error on channel " + channel, error);
+        // Graceful suppression of connection warnings
     };
 }
 
