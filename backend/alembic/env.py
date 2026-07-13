@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from app.core.config import settings
 from app.database.base import Base
 from app.models import *
+from app.database.models import DBUser, DBRole, DBDepartment, DBPermission
 
 config = context.config
 

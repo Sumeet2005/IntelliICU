@@ -40,6 +40,8 @@ from app.websocket.simulator import simulator
 # Application Lifespan
 # =====================================================
 
+from app.database.session import check_db_connectivity
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -49,6 +51,9 @@ async def lifespan(app: FastAPI):
     print("=" * 60)
     print("🚀 IntelliICU Starting...")
     print("=" * 60)
+
+    # Validate database connection at boot
+    check_db_connectivity()
 
     # Start ICU Simulator
     asyncio.create_task(simulator.start())
