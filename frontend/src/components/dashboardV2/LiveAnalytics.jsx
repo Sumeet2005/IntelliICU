@@ -77,15 +77,17 @@ export default function LiveAnalytics() {
 
       {/* Charts */}
 
+      {/* Charts */}
+
       <div className="grid grid-cols-12 gap-6">
 
         {/* Heart Rate */}
 
         <motion.div
 
-          whileHover={{ y: -5 }}
+          whileHover={{ y: -3 }}
 
-          className="col-span-12 xl:col-span-8 rounded-3xl bg-white p-6 shadow-xl border border-slate-200"
+          className="col-span-12 xl:col-span-8 clinical-card p-6"
 
         >
 
@@ -97,7 +99,7 @@ export default function LiveAnalytics() {
 
                 <HeartPulse className="text-red-500"/>
 
-                <h3 className="font-bold text-xl">
+                <h3 className="font-bold text-xl text-slate-800">
 
                   Heart Rate Trend
 
@@ -105,17 +107,17 @@ export default function LiveAnalytics() {
 
               </div>
 
-              <p className="mt-2 text-slate-500">
+              <p className="mt-2 text-xs text-slate-500">
 
-                Live streaming ICU telemetry
+                Live streaming ICU telemetry (last 6h)
 
               </p>
 
             </div>
 
-            <div className="rounded-2xl bg-red-50 px-4 py-2">
+            <div className="rounded-xl bg-red-50 px-4 py-2">
 
-              <span className="font-bold text-red-600">
+              <span className="font-bold text-red-600 text-sm">
 
                 118 BPM
 
@@ -133,9 +135,9 @@ export default function LiveAnalytics() {
 
                 <defs>
 
-                  <linearGradient id="hrGradient">
+                  <linearGradient id="hrGradient" x1="0" y1="0" x2="0" y2="1">
 
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.8}/>
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.2}/>
 
                     <stop offset="100%" stopColor="#ef4444" stopOpacity={0}/>
 
@@ -143,11 +145,11 @@ export default function LiveAnalytics() {
 
                 </defs>
 
-                <CartesianGrid strokeDasharray="3 3"/>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9"/>
 
-                <XAxis dataKey="t"/>
+                <XAxis dataKey="t" stroke="#94a3b8" fontSize={11}/>
 
-                <YAxis/>
+                <YAxis stroke="#94a3b8" fontSize={11}/>
 
                 <Tooltip/>
 
@@ -159,7 +161,7 @@ export default function LiveAnalytics() {
 
                   stroke="#ef4444"
 
-                  strokeWidth={4}
+                  strokeWidth={3}
 
                   fill="url(#hrGradient)"
 
@@ -173,87 +175,51 @@ export default function LiveAnalytics() {
 
         </motion.div>
 
-        {/* Right Column */}
+        {/* Right Column - Sepsis Prediction */}
 
-        <div className="col-span-12 xl:col-span-4 space-y-6">
-
-          {/* AI Confidence */}
+        <div className="col-span-12 xl:col-span-4 flex flex-col">
 
           <motion.div
 
-            whileHover={{ y: -5 }}
+            whileHover={{ y: -3 }}
 
-            className="rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-xl"
-
-          >
-
-            <BrainCircuit size={32}/>
-
-            <h3 className="mt-5 text-2xl font-bold">
-
-              AI Prediction
-
-            </h3>
-
-            <h1 className="mt-4 text-6xl font-black">
-
-              97.8%
-
-            </h1>
-
-            <p className="mt-3 text-indigo-100">
-
-              Confidence Score
-
-            </p>
-
-            <div className="mt-6 h-3 rounded-full bg-white/20">
-
-              <div
-
-                className="h-full rounded-full bg-white"
-
-                style={{ width: "97%" }}
-
-              />
-
-            </div>
-
-          </motion.div>
-
-          {/* Prediction Trend */}
-
-          <motion.div
-
-            whileHover={{ y: -5 }}
-
-            className="rounded-3xl bg-white p-6 shadow-xl border border-slate-200"
+            className="clinical-card p-6 flex-1 flex flex-col justify-between"
 
           >
 
-            <div className="flex items-center gap-2">
+            <div>
 
-              <TrendingUp className="text-cyan-600"/>
+              <div className="flex items-center gap-2">
 
-              <h3 className="font-bold">
+                <TrendingUp className="text-cyan-650"/>
 
-                Sepsis Prediction
+                <h3 className="font-bold text-slate-800 text-lg">
 
-              </h3>
+                  Sepsis AI Risk Trend
+
+                </h3>
+
+              </div>
+
+              <p className="mt-2 text-xs text-slate-500">
+
+                Real-time AI probability index
+
+              </p>
 
             </div>
 
-            <div className="mt-6 h-52">
+            <div className="mt-6 h-64">
 
               <ResponsiveContainer>
 
                 <LineChart data={prediction}>
 
-                  <CartesianGrid strokeDasharray="3 3"/>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9"/>
 
-                  <XAxis dataKey="t"/>
+                  <XAxis dataKey="t" stroke="#94a3b8" fontSize={11}/>
 
-                  <YAxis/>
+                  <YAxis stroke="#94a3b8" fontSize={11}/>
 
                   <Tooltip/>
 
@@ -263,11 +229,11 @@ export default function LiveAnalytics() {
 
                     dataKey="p"
 
-                    stroke="#06b6d4"
+                    stroke="#0284c7"
 
-                    strokeWidth={4}
+                    strokeWidth={3}
 
-                    dot={{ r: 4 }}
+                    dot={{ r: 4, strokeWidth: 2, fill: "#fff" }}
 
                   />
 
@@ -296,23 +262,23 @@ export default function LiveAnalytics() {
 
           <motion.div
 
-            whileHover={{ scale: 1.03 }}
+            whileHover={{ y: -2 }}
 
             key={title}
 
-            className="rounded-3xl bg-white border border-slate-200 p-6 shadow-lg"
+            className="clinical-card p-6"
 
           >
 
-            <Activity className={color}/>
+            <Activity className={color} size={18}/>
 
-            <h2 className="mt-4 text-4xl font-black">
+            <h2 className="mt-4 text-3xl font-black text-slate-800">
 
               {value}
 
             </h2>
 
-            <p className="mt-2 text-slate-500">
+            <p className="mt-1 text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
 
               {title}
 

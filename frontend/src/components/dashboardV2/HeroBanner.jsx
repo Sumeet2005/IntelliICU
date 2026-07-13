@@ -74,109 +74,25 @@ export default function HeroBanner() {
 
         </div>
 
-        {/* Right Side */}
-        <div className="col-span-12 lg:col-span-5">
-
-          <div className="grid grid-cols-2 gap-5">
-
-            <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-
-              <Users className="text-cyan-300" />
-
-              <h2 className="mt-4 text-4xl font-bold">
-
-                48
-
-              </h2>
-
-              <p className="text-slate-300">
-
-                Active Patients
-
-              </p>
-
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-
-              <AlertTriangle className="text-red-400" />
-
-              <h2 className="mt-4 text-4xl font-bold">
-
-                7
-
-              </h2>
-
-              <p className="text-slate-300">
-
-                Critical Alerts
-
-              </p>
-
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-
-              <ShieldCheck className="text-emerald-400" />
-
-              <h2 className="mt-4 text-4xl font-bold">
-
-                97.8%
-
-              </h2>
-
-              <p className="text-slate-300">
-
-                AI Confidence
-
-              </p>
-
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-
-              <Activity className="text-cyan-300 animate-pulse" />
-
-              <h2 className="mt-4 text-4xl font-bold text-emerald-400">
-
-                LIVE
-
-              </h2>
-
-              <p className="text-slate-300">
-
-                Monitoring
-
-              </p>
-
-            </div>
-
-          </div>
-
-          <div className="mt-6 rounded-2xl border border-cyan-400/20 bg-black/20 p-6 backdrop-blur">
-
+        {/* Right Side - Clinical Summary Box */}
+        <div className="col-span-12 lg:col-span-5 flex flex-col justify-center">
+          <div className="rounded-2xl border border-cyan-400/20 bg-black/20 p-6 backdrop-blur">
             <div className="flex items-center gap-3">
-
-              <Sparkles className="text-cyan-300" />
-
-              <h3 className="font-semibold">
-
-                AI Clinical Summary
-
+              <Sparkles className="text-cyan-300 animate-pulse" />
+              <h3 className="font-semibold text-base">
+                Real-Time Clinical Status
               </h3>
-
             </div>
 
-            <p className="mt-4 leading-7 text-slate-300">
-
-              AI has identified <strong>3 high-risk patients</strong> with an
-              elevated probability of sepsis. Early intervention is recommended
-              within the next hour based on current vitals and laboratory trends.
-
+            <p className="mt-4 text-sm leading-7 text-slate-300">
+              The AI Decision Support Engine has identified <strong>3 high-risk patients</strong> with elevated probability of sepsis. Broad-spectrum protocol checklists are currently outstanding on beds MICU-04 and MICU-07.
             </p>
-
+            
+            <div className="mt-6 border-t border-white/10 pt-4 flex justify-between text-xs text-slate-400">
+              <span>Next scheduled AI analysis: Under 2 mins</span>
+              <span className="text-cyan-300 font-bold">100% telemetry online</span>
+            </div>
           </div>
-
         </div>
 
       </div>

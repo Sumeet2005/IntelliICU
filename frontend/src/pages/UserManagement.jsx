@@ -13,7 +13,6 @@ import {
   Shield,
   Briefcase,
   Mail,
-  RefreshCw,
   ChevronLeft,
   ChevronRight,
   ShieldAlert,
@@ -213,42 +212,42 @@ export default function UserManagement() {
         </div>
         <button
           onClick={() => { resetForms(); setAddOpen(true); }}
-          className="flex items-center gap-2 rounded-2xl bg-slate-900 hover:bg-slate-850 text-white px-5 py-3 text-xs font-bold transition shadow-md"
+          className="btn-clinical-primary"
         >
-          <Plus size={16} />
+          <Plus size={14} />
           Create New User
         </button>
       </div>
 
       {/* Info Stats grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="rounded-[24px] bg-gradient-to-tr from-slate-50 to-slate-100/50 border border-slate-200/60 p-5 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center shadow-sm">
-            <Users size={22} />
+        <div className="clinical-card p-5 flex items-center gap-4">
+          <div className="h-10 w-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center shadow-sm border border-cyan-100/20">
+            <Users size={18} />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Total Directory Records</span>
-            <span className="text-2xl font-black text-slate-800 mt-0.5 block">{total}</span>
+            <span className="clinical-label text-[10px] text-slate-400">Total Records</span>
+            <span className="text-xl font-black text-slate-800 mt-0.5 block leading-none">{total}</span>
           </div>
         </div>
-        <div className="rounded-[24px] bg-gradient-to-tr from-slate-50 to-slate-100/50 border border-slate-200/60 p-5 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm">
-            <UserCheck size={22} />
+        <div className="clinical-card p-5 flex items-center gap-4">
+          <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100/20">
+            <UserCheck size={18} />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Active Clinical Users</span>
-            <span className="text-2xl font-black text-slate-800 mt-0.5 block">
+            <span className="clinical-label text-[10px] text-slate-400">Active Users</span>
+            <span className="text-xl font-black text-slate-800 mt-0.5 block leading-none">
               {users.filter(u => u.is_active).length}
             </span>
           </div>
         </div>
-        <div className="rounded-[24px] bg-gradient-to-tr from-slate-50 to-slate-100/50 border border-slate-200/60 p-5 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-sm">
-            <UserX size={22} />
+        <div className="clinical-card p-5 flex items-center gap-4">
+          <div className="h-10 w-10 rounded-xl bg-red-50 text-red-650 flex items-center justify-center shadow-sm border border-red-100/20">
+            <UserX size={18} />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Deactivated Accounts</span>
-            <span className="text-2xl font-black text-slate-800 mt-0.5 block">
+            <span className="clinical-label text-[10px] text-slate-400">Deactivated</span>
+            <span className="text-xl font-black text-slate-800 mt-0.5 block leading-none">
               {users.filter(u => !u.is_active).length}
             </span>
           </div>
@@ -256,22 +255,22 @@ export default function UserManagement() {
       </div>
 
       {/* Filter toolbar */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-50 p-4 rounded-3xl border border-slate-150 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-50/50 p-4.5 rounded-2xl border border-slate-100">
         <div className="relative flex-1 w-full">
-          <Search size={16} className="absolute left-3.5 top-3.5 text-slate-400" />
+          <Search size={14} className="absolute left-3.5 top-3.5 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search users by name or email..."
-            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-xs font-semibold outline-none transition focus:border-slate-400 text-slate-800"
+            className="input-clinical pl-10"
           />
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="rounded-2xl border border-slate-200 bg-white py-3 px-4 text-xs font-bold text-slate-600 outline-none w-full sm:w-40"
+            className="input-clinical w-full sm:w-40 font-bold"
           >
             <option value="all">All Roles</option>
             {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
@@ -279,7 +278,7 @@ export default function UserManagement() {
           <select
             value={deptFilter}
             onChange={(e) => setDeptFilter(e.target.value)}
-            className="rounded-2xl border border-slate-200 bg-white py-3 px-4 text-xs font-bold text-slate-600 outline-none w-full sm:w-48"
+            className="input-clinical w-full sm:w-48 font-bold"
           >
             <option value="all">All Departments</option>
             {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
@@ -288,24 +287,24 @@ export default function UserManagement() {
       </div>
 
       {/* Grid List View */}
-      <div className="rounded-[30px] border border-slate-200 bg-white shadow-xl overflow-hidden">
+      <div className="clinical-card shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="table-clinical">
             <thead>
-              <tr className="bg-slate-50/70 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <th className="py-4.5 px-6">User Profile</th>
-                <th className="py-4.5 px-6">Security Role</th>
-                <th className="py-4.5 px-6">Department</th>
-                <th className="py-4.5 px-6">Account Status</th>
-                <th className="py-4.5 px-6 text-right">Actions</th>
+              <tr>
+                <th className="th-clinical">User Profile</th>
+                <th className="th-clinical">Security Role</th>
+                <th className="th-clinical">Department</th>
+                <th className="th-clinical">Account Status</th>
+                <th className="th-clinical text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 text-xs font-semibold text-slate-600">
+            <tbody className="text-xs font-semibold text-slate-600">
               {users.length > 0 ? (
                 users.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50/40 transition">
-                    <td className="py-4 px-6 flex items-center gap-3.5">
-                      <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-slate-100 to-slate-200/50 flex items-center justify-center font-bold text-slate-600 uppercase shadow-sm border border-slate-200/30">
+                    <td className="td-clinical flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-slate-100 to-slate-200/50 flex items-center justify-center font-bold text-slate-600 uppercase shadow-sm border border-slate-200/30 text-xs">
                         {user.username.slice(0, 2)}
                       </div>
                       <div>
@@ -316,45 +315,41 @@ export default function UserManagement() {
                         </span>
                       </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">
-                        <Shield size={11} />
+                    <td className="td-clinical">
+                      <span className="badge-clinical-info">
+                        <Shield size={10} />
                         {user.role}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="td-clinical">
                       {user.department ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-50 text-cyan-700 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">
-                          <Briefcase size={11} />
+                        <span className="badge-clinical-success">
+                          <Briefcase size={10} />
                           {user.department}
                         </span>
                       ) : (
                         <span className="text-slate-400">-</span>
                       )}
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="td-clinical">
                       {user.is_active ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 text-emerald-700 px-2.5 py-1 text-[10px] font-extrabold uppercase">
-                          Active
-                        </span>
+                        <span className="badge-clinical-success">Active</span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 text-red-700 px-2.5 py-1 text-[10px] font-extrabold uppercase">
-                          Inactive
-                        </span>
+                        <span className="badge-clinical-danger">Inactive</span>
                       )}
                     </td>
-                    <td className="py-4 px-6 text-right">
+                    <td className="td-clinical text-right">
                       <div className="flex justify-end gap-1.5">
                         <button
                           onClick={() => openEdit(user)}
-                          className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition"
+                          className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition cursor-pointer"
                           title="Edit User Details"
                         >
                           <Edit2 size={13} />
                         </button>
                         <button
                           onClick={() => openReset(user)}
-                          className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-855 transition"
+                          className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition cursor-pointer"
                           title="Reset User Password"
                         >
                           <Lock size={13} />
@@ -362,7 +357,7 @@ export default function UserManagement() {
                         {user.is_active && (
                           <button
                             onClick={() => handleDeactivate(user)}
-                            className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition"
+                            className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-650 transition cursor-pointer"
                             title="Soft-Delete/Deactivate User"
                           >
                             <Trash2 size={13} />
@@ -375,7 +370,7 @@ export default function UserManagement() {
               ) : (
                 <tr>
                   <td colSpan="5" className="py-16 text-center">
-                    <ShieldAlert size={36} className="mx-auto text-slate-300 mb-2" />
+                    <ShieldAlert size={36} className="mx-auto text-slate-350 mb-2" />
                     <h4 className="font-bold text-slate-600 text-sm">No Accounts Found</h4>
                     <p className="text-xs text-slate-400 mt-1">No matches found in directory database.</p>
                   </td>
@@ -387,7 +382,7 @@ export default function UserManagement() {
 
         {/* Footer pagination */}
         {totalPages > 1 && (
-          <div className="border-t border-slate-100 px-6 py-4.5 bg-slate-50/50 flex items-center justify-between">
+          <div className="border-t border-slate-100 px-6 py-4 bg-slate-50/50 flex items-center justify-between">
             <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
               Showing page {page} of {totalPages}
             </span>
@@ -395,16 +390,16 @@ export default function UserManagement() {
               <button
                 disabled={page === 1}
                 onClick={() => setPage(prev => Math.max(1, prev - 1))}
-                className="p-2 rounded-xl bg-white border border-slate-200 disabled:opacity-50 text-slate-600 transition hover:bg-slate-50"
+                className="p-1.5 rounded-lg bg-white border border-slate-200 disabled:opacity-50 text-slate-600 transition hover:bg-slate-50 cursor-pointer"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={14} />
               </button>
               <button
                 disabled={page === totalPages}
                 onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
-                className="p-2 rounded-xl bg-white border border-slate-200 disabled:opacity-50 text-slate-600 transition hover:bg-slate-50"
+                className="p-1.5 rounded-lg bg-white border border-slate-200 disabled:opacity-50 text-slate-600 transition hover:bg-slate-50 cursor-pointer"
               >
-                <ChevronRight size={16} />
+                <ChevronRight size={14} />
               </button>
             </div>
           </div>
@@ -421,17 +416,17 @@ export default function UserManagement() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md rounded-3xl bg-white p-7 border border-slate-200 shadow-2xl z-10 space-y-6"
+              className="relative w-full max-w-md rounded-2xl bg-white p-6 border border-slate-200 shadow-2xl z-10 space-y-6"
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 className="text-lg font-black text-slate-800">Add New User</h3>
-                <button onClick={() => setAddOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg">
+                <button onClick={() => setAddOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg cursor-pointer">
                   <X size={18} />
                 </button>
               </div>
 
               {error && (
-                <div className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50 p-3.5 text-xs text-red-600 font-semibold">
+                <div className="alert-clinical-danger">
                   <ShieldAlert size={16} className="shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
@@ -446,7 +441,7 @@ export default function UserManagement() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Enter unique username"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white py-3 px-4 outline-none transition focus:border-slate-400 text-slate-800"
+                    className="input-clinical"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -457,7 +452,7 @@ export default function UserManagement() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="user@intelliicu.org"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white py-3 px-4 outline-none transition focus:border-slate-400 text-slate-800"
+                    className="input-clinical"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -468,7 +463,7 @@ export default function UserManagement() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Minimum 6 characters"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white py-3 px-4 outline-none transition focus:border-slate-400 text-slate-800"
+                    className="input-clinical"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -478,7 +473,7 @@ export default function UserManagement() {
                       required
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white py-3 px-3.5 outline-none transition focus:border-slate-400 text-slate-800 font-bold"
+                      className="input-clinical font-bold"
                     >
                       <option value="">Select Role</option>
                       {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
@@ -489,7 +484,7 @@ export default function UserManagement() {
                     <select
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white py-3 px-3.5 outline-none transition focus:border-slate-400 text-slate-800 font-bold"
+                      className="input-clinical font-bold"
                     >
                       <option value="">None</option>
                       {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
@@ -501,13 +496,13 @@ export default function UserManagement() {
                   <button
                     type="button"
                     onClick={() => setAddOpen(false)}
-                    className="flex-1 rounded-xl border border-slate-250 py-3.5 font-bold hover:bg-slate-50 transition"
+                    className="btn-clinical-secondary flex-1"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-xl bg-slate-900 hover:bg-slate-850 text-white font-bold py-3.5 transition"
+                    className="btn-clinical-primary flex-1"
                   >
                     Create User
                   </button>
@@ -525,17 +520,17 @@ export default function UserManagement() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md rounded-3xl bg-white p-7 border border-slate-200 shadow-2xl z-10 space-y-6"
+              className="relative w-full max-w-md rounded-2xl bg-white p-6 border border-slate-200 shadow-2xl z-10 space-y-6"
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 className="text-lg font-black text-slate-800">Edit User Account</h3>
-                <button onClick={() => setEditOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg">
+                <button onClick={() => setEditOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg cursor-pointer">
                   <X size={18} />
                 </button>
               </div>
 
               {error && (
-                <div className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50 p-3.5 text-xs text-red-600 font-semibold">
+                <div className="alert-clinical-danger">
                   <ShieldAlert size={16} className="shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
@@ -548,7 +543,7 @@ export default function UserManagement() {
                     type="text"
                     disabled
                     value={selectedUser?.username}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-100 py-3 px-4 outline-none text-slate-500 font-bold opacity-60"
+                    className="input-clinical bg-slate-100 opacity-60 cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -558,7 +553,7 @@ export default function UserManagement() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white py-3 px-4 outline-none transition focus:border-slate-400 text-slate-800"
+                    className="input-clinical"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -568,7 +563,7 @@ export default function UserManagement() {
                       required
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white py-3 px-3.5 outline-none transition focus:border-slate-400 text-slate-800 font-bold"
+                      className="input-clinical font-bold"
                     >
                       {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
                     </select>
@@ -578,7 +573,7 @@ export default function UserManagement() {
                     <select
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white py-3 px-3.5 outline-none transition focus:border-slate-400 text-slate-800 font-bold"
+                      className="input-clinical font-bold"
                     >
                       <option value="">None</option>
                       {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
@@ -586,7 +581,7 @@ export default function UserManagement() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-slate-100">
                   <div>
                     <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Account Active Status</label>
                     <p className="text-[10px] text-slate-400 mt-0.5">Toggle to suspend or resume user access</p>
@@ -603,13 +598,13 @@ export default function UserManagement() {
                   <button
                     type="button"
                     onClick={() => setEditOpen(false)}
-                    className="flex-1 rounded-xl border border-slate-250 py-3.5 font-bold hover:bg-slate-50 transition"
+                    className="btn-clinical-secondary flex-1"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-xl bg-slate-900 hover:bg-slate-850 text-white font-bold py-3.5 transition"
+                    className="btn-clinical-primary flex-1"
                   >
                     Save Changes
                   </button>
@@ -627,20 +622,20 @@ export default function UserManagement() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md rounded-3xl bg-white p-7 border border-slate-200 shadow-2xl z-10 space-y-6"
+              className="relative w-full max-w-md rounded-2xl bg-white p-7 border border-slate-200 shadow-2xl z-10 space-y-6"
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
                   <Lock size={18} className="text-slate-600" />
                   Reset User Password
                 </h3>
-                <button onClick={() => setResetOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg">
+                <button onClick={() => setResetOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg cursor-pointer">
                   <X size={18} />
                 </button>
               </div>
 
               {error && (
-                <div className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50 p-3.5 text-xs text-red-600 font-semibold">
+                <div className="alert-clinical-danger">
                   <ShieldAlert size={16} className="shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
@@ -653,7 +648,7 @@ export default function UserManagement() {
                     type="text"
                     disabled
                     value={selectedUser?.username}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-100 py-3 px-4 outline-none text-slate-500 font-bold opacity-60"
+                    className="input-clinical bg-slate-105 opacity-60 cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -664,7 +659,7 @@ export default function UserManagement() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Minimum 6 characters"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 focus:bg-white py-3 px-4 outline-none transition focus:border-slate-400 text-slate-800"
+                    className="input-clinical"
                   />
                 </div>
 
@@ -672,13 +667,13 @@ export default function UserManagement() {
                   <button
                     type="button"
                     onClick={() => setResetOpen(false)}
-                    className="flex-1 rounded-xl border border-slate-250 py-3.5 font-bold hover:bg-slate-50 transition"
+                    className="btn-clinical-secondary flex-1"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-xl bg-slate-900 hover:bg-slate-850 text-white font-bold py-3.5 transition"
+                    className="btn-clinical-primary flex-1"
                   >
                     Reset Password
                   </button>

@@ -7,20 +7,20 @@ import VitalsOverview from "../../components/patientProfile/VitalsOverview";
 export default function Monitoring() {
   return (
     <div className="space-y-8">
-      <div className="rounded-[32px] bg-gradient-to-r from-slate-900 via-cyan-900 to-blue-900 p-8 text-white shadow-xl">
+      <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-[#0B2942] to-cyan-950 p-6 text-white shadow-md">
         <div className="flex items-center gap-4">
-          <div className="rounded-2xl bg-white/10 p-4">
-            <Radio size={32} />
+          <div className="rounded-xl bg-white/10 p-3">
+            <Radio size={24} />
           </div>
           <div>
-            <h1 className="text-4xl font-black">Live Monitoring</h1>
-            <p className="mt-2 text-cyan-100">
+            <h1 className="text-2xl font-black">Live Monitoring</h1>
+            <p className="mt-1 text-xs text-slate-350">
               Real-time ICU vitals, alerts, and streaming analytics
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-2 rounded-full bg-emerald-500/20 px-4 py-2">
-            <Activity className="text-emerald-300" size={18} />
-            <span className="font-semibold text-emerald-200">Stream Ready</span>
+          <div className="ml-auto flex items-center gap-2 rounded-full bg-emerald-500/20 px-3.5 py-1.5 text-xs">
+            <Activity className="text-emerald-300" size={14} />
+            <span className="font-semibold text-emerald-255">Stream Active</span>
           </div>
         </div>
       </div>

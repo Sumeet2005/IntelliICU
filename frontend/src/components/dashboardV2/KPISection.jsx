@@ -91,38 +91,36 @@ export default function KPISection() {
         return (
           <motion.div
             key={item.title}
-            whileHover={{ y: -6 }}
-            className="rounded-3xl bg-white p-6 shadow-xl"
+            whileHover={{ y: -3 }}
+            className="clinical-card p-6"
           >
-            <div className="flex justify-between">
+            <div className="flex justify-between items-start">
               <div>
-                <p className="text-slate-500">{item.title}</p>
+                <span className="clinical-label">{item.title}</span>
 
                 <motion.h2
                   key={item.value}
                   initial={{ scale: 0.9, opacity: 0.6 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.25 }}
-                  className="mt-3 text-5xl font-black"
+                  className="mt-3 text-4xl font-black text-slate-800 tracking-tight"
                 >
                   {item.value}
                 </motion.h2>
               </div>
 
               <div
-                className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color}`}
+                className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${item.color} shadow-sm`}
               >
-                <Icon className="text-white" />
+                <Icon className="text-white" size={20} />
               </div>
             </div>
 
-            <div className="mt-8 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-emerald-600">
-                <ArrowUpRight size={18} />
-                Live
+            <div className="mt-6 flex items-center justify-between border-t border-slate-50 pt-4">
+              <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-emerald-600 uppercase tracking-wider">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                Live Streaming
               </div>
-
-              <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
             </div>
           </motion.div>
         );

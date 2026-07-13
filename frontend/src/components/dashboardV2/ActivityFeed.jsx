@@ -8,7 +8,7 @@ export default function ActivityFeed() {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-[30px] border border-slate-200 bg-white p-8 shadow-xl"
+      className="clinical-card p-6"
     >
       <h2 className="text-2xl font-bold">AI Activity Feed</h2>
       <p className="mt-2 text-slate-500">

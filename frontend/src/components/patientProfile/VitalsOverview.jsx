@@ -128,142 +128,60 @@ export default function VitalsOverview() {
 
   return (
     <div className="space-y-6">
-
-      {/* Header */}
-
-      <div className="rounded-[30px] bg-white border border-slate-200 shadow-xl p-6">
-
-        <div className="flex items-center justify-between">
-
-          <div>
-
-            <h2 className="text-3xl font-black">
-
-              Live Vital Signs
-
-            </h2>
-
-            <p className="mt-2 text-slate-500">
-
-              ICU Physiological Monitoring
-
-            </p>
-
-          </div>
-
-          <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2">
-
-            <span className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse"></span>
-
-            <span className="font-semibold text-emerald-700">
-
-              Live
-
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
-
       {/* Vital Cards */}
-
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-
         {vitals.map((item) => {
-
           const Icon = item.icon;
-
           return (
-
             <motion.div
               key={item.title}
-              whileHover={{
-                y: -6,
-              }}
-              className={`rounded-[24px] border ${item.border} ${item.bg} p-6 shadow-lg`}
+              whileHover={{ y: -2 }}
+              className="clinical-card p-5"
             >
-
               <div className="flex items-center justify-between">
-
                 <Icon
                   className={item.color}
-                  size={34}
+                  size={20}
                 />
-
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold shadow">
-
+                <span className="rounded-lg bg-slate-50 border border-slate-100 px-2 py-0.5 text-[9px] font-black uppercase text-slate-400">
                   Normal Range
-
                 </span>
-
               </div>
 
-              <h2 className="mt-8 text-5xl font-black">
-
+              <h2 className="mt-4 text-3xl font-black text-slate-800 tracking-tight">
                 {item.value}
-
               </h2>
-
-              <p className="mt-2 text-slate-500">
-
-                {item.unit}
-
+              <p className="text-[10px] text-slate-450 font-bold uppercase mt-0.5">
+                {item.unit} • {item.title}
               </p>
 
-              <div className="mt-6 h-2 rounded-full bg-white overflow-hidden">
-
+              <div className="mt-4 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600"
+                  className="h-full rounded-full bg-cyan-600"
                   style={{ width: "75%" }}
                 />
-
               </div>
-
-              <p className="mt-4 font-semibold">
-
-                {item.title}
-
-              </p>
-
             </motion.div>
-
           );
-
         })}
-
       </div>
 
-      {/* AI Risk Trend */}
-
+      {/* Physiological Trend Chart */}
       <motion.div
-        whileHover={{
-          scale: 1.01,
-        }}
-        className="rounded-[30px] bg-white border border-slate-200 shadow-xl p-6"
+        whileHover={{ y: -2 }}
+        className="clinical-card p-6"
       >
-
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b pb-4 gap-4">
-
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-50 pb-4 gap-4">
           <div>
-
-            <h2 className="text-2xl font-bold">
-
+            <h2 className="text-lg font-bold text-slate-800">
               {getMetricTitle()}
-
             </h2>
-
-            <p className="mt-2 text-slate-500">
-
-              Rolling live patient history
-
+            <p className="text-xs text-slate-500 mt-0.5">
+              Live ICU physiological telemetry stream
             </p>
-
           </div>
 
-          <div className="flex flex-wrap gap-2">
-
+          <div className="flex flex-wrap gap-1.5">
             {[
               { id: "heartRate", label: "HR" },
               { id: "bloodPressure", label: "BP" },
@@ -272,164 +190,124 @@ export default function VitalsOverview() {
               { id: "temperature", label: "Temp" },
               { id: "risk", label: "Risk" },
             ].map((tab) => (
-
               <button
                 key={tab.id}
                 onClick={() => setActiveMetric(tab.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                   activeMetric === tab.id
-                    ? "bg-cyan-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-100 text-slate-655 hover:bg-slate-200"
                 }`}
               >
-
                 {tab.label}
-
               </button>
-
             ))}
-
           </div>
-
         </div>
 
         {history.length === 0 ? (
-          <div className="flex h-80 flex-col items-center justify-center rounded-2xl bg-slate-50 border border-dashed border-slate-200 mt-6">
-            <Loader2 className="animate-spin text-slate-400 mb-2" size={28} />
-            <p className="text-slate-500 font-semibold">Waiting for live data...</p>
+          <div className="flex h-80 flex-col items-center justify-center rounded-xl bg-slate-50/50 border border-dashed border-slate-200 mt-6">
+            <Loader2 className="animate-spin text-slate-400 mb-2" size={24} />
+            <p className="text-xs text-slate-450 font-bold">Waiting for stream data telemetry...</p>
           </div>
         ) : (
-          <div className="mt-8 h-80">
+          <div className="mt-6">
+            <div className="h-80">
+              <ResponsiveContainer>
+                <AreaChart
+                  data={history}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="chartColor"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor={metricColors[activeMetric]?.stroke}
+                        stopOpacity={0.15}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor={metricColors[activeMetric]?.stroke}
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
 
-            <ResponsiveContainer>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="time" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
+                  <Tooltip contentStyle={{ background: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 'bold' }} />
 
-              <AreaChart
-                data={history}
-              >
-
-                <defs>
-
-                  <linearGradient
-                    id="chartColor"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-
-                    <stop
-                      offset="0%"
-                      stopColor={metricColors[activeMetric]?.stroke}
-                      stopOpacity={0.4}
-                    />
-
-                    <stop
-                      offset="100%"
-                      stopColor={metricColors[activeMetric]?.stroke}
-                      stopOpacity={0}
-                    />
-
-                  </linearGradient>
-
-                </defs>
-
-                <CartesianGrid strokeDasharray="4 4" />
-
-                <XAxis dataKey="time" />
-
-                <Tooltip />
-
-                {activeMetric === "bloodPressure" ? (
-                  <>
+                  {activeMetric === "bloodPressure" ? (
+                    <>
+                      <Area
+                        type="monotone"
+                        dataKey="systolic"
+                        name="Systolic BP"
+                        stroke="#0ea5e9"
+                        fill="url(#chartColor)"
+                        strokeWidth={2.5}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="diastolic"
+                        name="Diastolic BP"
+                        stroke="#2563eb"
+                        fill="none"
+                        strokeWidth={1.5}
+                      />
+                    </>
+                  ) : (
                     <Area
                       type="monotone"
-                      dataKey="systolic"
-                      name="Systolic BP"
-                      stroke="#0891b2"
+                      dataKey={activeMetric}
+                      name={getMetricTitle()}
+                      stroke={metricColors[activeMetric]?.stroke}
                       fill="url(#chartColor)"
-                      strokeWidth={3}
+                      strokeWidth={2.5}
                     />
-                    <Area
-                      type="monotone"
-                      dataKey="diastolic"
-                      name="Diastolic BP"
-                      stroke="#3b82f6"
-                      fill="none"
-                      strokeWidth={2}
-                    />
-                  </>
-                ) : (
-                  <Area
-                    type="monotone"
-                    dataKey={activeMetric}
-                    name={getMetricTitle()}
-                    stroke={metricColors[activeMetric]?.stroke}
-                    fill="url(#chartColor)"
-                    strokeWidth={3}
-                  />
-                )}
-
-              </AreaChart>
-
-            </ResponsiveContainer>
-
-            <div className="mt-6 flex justify-between rounded-xl bg-slate-50 p-4">
-
-              <div>
-
-                <p className="text-sm text-slate-500">
-
-                  Previous Risk
-
-                </p>
-
-                <p className="text-xl font-bold">
-
-                  {((risk?.previous_risk ?? 0) * 100).toFixed(0)}%
-
-                </p>
-
-              </div>
-
-              <div>
-
-                <p className="text-sm text-slate-500">
-
-                  Current Risk
-
-                </p>
-
-                <p className="text-xl font-bold">
-
-                  {((risk?.current_risk ?? 0) * 100).toFixed(0)}%
-
-                </p>
-
-              </div>
-
-              <div>
-
-                <p className="text-sm text-slate-500">
-
-                  Trend
-
-                </p>
-
-                <p className="text-xl font-bold">
-
-                  {risk?.trend ?? "-"}
-
-                </p>
-
-              </div>
-
+                  )}
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
 
+            <div className="mt-6 flex justify-between rounded-xl bg-slate-50/70 border border-slate-100 p-4 text-xs font-semibold text-slate-500">
+              <div>
+                <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
+                  Baseline Risk
+                </p>
+                <p className="text-lg font-black text-slate-800 mt-1">
+                  {((risk?.previous_risk ?? 0) * 100).toFixed(0)}%
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
+                  Current Risk Index
+                </p>
+                <p className="text-lg font-black text-slate-850 mt-1">
+                  {((risk?.current_risk ?? 0) * 100).toFixed(0)}%
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
+                  Physiological Trend
+                </p>
+                <p className="text-lg font-black text-slate-800 mt-1 uppercase">
+                  {risk?.trend ?? "Stable"}
+                </p>
+              </div>
+            </div>
           </div>
         )}
-
       </motion.div>
-
     </div>
   );
 }

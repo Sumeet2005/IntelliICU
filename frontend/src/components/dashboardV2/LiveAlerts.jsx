@@ -50,7 +50,7 @@ export default function LiveAlerts() {
     ) || null;
 
   return (
-    <div className="rounded-[30px] border border-slate-200 bg-white shadow-xl">
+    <div className="clinical-card shadow-xl">
       <div className="border-b p-6">
         <div className="flex items-center justify-between">
           <div>

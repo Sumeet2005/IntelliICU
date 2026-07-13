@@ -63,21 +63,20 @@ export default function HospitalAnalytics() {
     <section className="space-y-6">
       {/* Occupancy */}
       <motion.div
-        whileHover={{ y: -5 }}
-        className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-xl"
+        whileHover={{ y: -3 }}
+        className="clinical-card p-6"
       >
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-xl font-bold text-slate-800">
               Hospital Analytics
             </h2>
-
-            <p className="mt-2 text-slate-500">
+            <p className="text-xs text-slate-500 mt-0.5">
               Operational Intelligence
             </p>
           </div>
 
-          <TrendingUp className="text-cyan-600" />
+          <TrendingUp className="text-cyan-600" size={18} />
         </div>
 
         <div className="mt-8 h-72">
@@ -98,7 +97,7 @@ export default function HospitalAnalytics() {
               <RadialBar
                 background
                 dataKey="value"
-                cornerRadius={20}
+                cornerRadius={12}
               />
             </RadialBarChart>
           </ResponsiveContainer>
@@ -110,53 +109,53 @@ export default function HospitalAnalytics() {
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3 }}
-            className="text-5xl font-black text-cyan-600"
+            className="text-4xl font-black text-cyan-600 tracking-tight"
           >
             {occupancyValue}%
           </motion.h1>
 
-          <p className="text-slate-500">
+          <span className="clinical-label mt-1 block">
             Bed Occupancy
-          </p>
+          </span>
         </div>
       </motion.div>
 
       {/* Resource Cards */}
-      <div className="space-y-5">
+      <div className="space-y-4">
         {resources.map((item, index) => {
           const Icon = item.icon;
 
           return (
             <motion.div
               key={index}
-              whileHover={{ scale: 1.02 }}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg"
+              whileHover={{ y: -1 }}
+              className="clinical-card p-4.5"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4.5">
                   <div
-                    className={`flex h-14 w-14 items-center justify-center rounded-2xl ${item.color}`}
+                    className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.color}`}
                   >
-                    <Icon size={26} />
+                    <Icon size={20} />
                   </div>
 
                   <div>
-                    <p className="text-sm text-slate-500">
+                    <span className="clinical-label text-[10px]">
                       {item.title}
-                    </p>
+                    </span>
 
                     <motion.h3
                       key={item.value}
                       initial={{ opacity: 0.5 }}
                       animate={{ opacity: 1 }}
-                      className="text-2xl font-bold"
+                      className="text-lg font-black text-slate-800 tracking-tight mt-0.5"
                     >
                       {item.value}
                     </motion.h3>
                   </div>
                 </div>
 
-                <span className="block h-3 w-3 animate-pulse rounded-full bg-emerald-500"></span>
+                <span className="block h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
               </div>
             </motion.div>
           );
@@ -165,22 +164,19 @@ export default function HospitalAnalytics() {
 
       {/* Footer */}
       <motion.div
-        whileHover={{ scale: 1.02 }}
-        className="rounded-3xl bg-gradient-to-br from-cyan-600 to-blue-700 p-6 text-white shadow-xl"
+        whileHover={{ y: -2 }}
+        className="rounded-2xl bg-gradient-to-br from-slate-900 via-[#0B2942] to-cyan-950 p-6 text-white shadow-md border border-slate-950"
       >
-        <p className="text-sm text-cyan-100">
+        <span className="text-[10px] text-cyan-400 font-extrabold uppercase tracking-wider block">
           AI Operational Insight
-        </p>
+        </span>
 
-        <h3 className="mt-3 text-xl font-bold">
-          ICU utilization is approaching capacity.
+        <h3 className="mt-2 text-base font-bold">
+          ICU Bed Utilization Notice
         </h3>
 
-        <p className="mt-4 leading-7 text-cyan-100">
-          Based on current admission trends, the AI predicts bed occupancy
-          may exceed 90% within the next 8 hours. Consider preparing
-          overflow resources and prioritizing discharge planning for
-          clinically stable patients.
+        <p className="mt-3 text-xs leading-relaxed text-slate-350">
+          The platform predicts occupancy levels may reach 90% within the next 8 hours. Active discharge planning is advised for clinically stable recovery cases.
         </p>
       </motion.div>
     </section>
