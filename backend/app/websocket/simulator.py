@@ -9,6 +9,7 @@ from datetime import datetime
 from app.websocket.manager import manager
 from app.alerts.manager import manager as alert_manager
 from app.alerts.models import AlertSeverity
+from app.services.timeline_engine import timeline_engine
 
 
 class ICUSimulator:
@@ -83,6 +84,7 @@ class ICUSimulator:
         ]
 
         self.alerts = []
+        self.last_vitals_log = {}
 
     async def start(self):
 
@@ -180,6 +182,7 @@ class ICUSimulator:
     def _update_patients(self):
 
         for patient in self.patients:
+            old_level = patient["risk_level"]
 
             # Update risk score
             delta = random.uniform(-0.03, 0.03)
@@ -207,6 +210,16 @@ class ICUSimulator:
             else:
                 patient["risk_level"] = "LOW"
                 patient["status"] = "Stable"
+
+            if old_level != patient["risk_level"]:
+                timeline_engine.add_event(
+                    patient_id=patient["id"],
+                    event_type="AI",
+                    title="Sepsis Risk Level Changed",
+                    description=f"Sepsis risk level transitioned from {old_level} to {patient['risk_level']}.",
+                    actor="System",
+                    metadata={"old_level": old_level, "new_level": patient["risk_level"]}
+                )
 
             # Live Vital Signs
             patient["heart_rate"] = max(
@@ -270,6 +283,26 @@ class ICUSimulator:
                 ),
                 1,
             )
+
+            # Log vitals telemetry update periodically (every 20 seconds)
+            now = datetime.now()
+            last_log = self.last_vitals_log.get(patient["id"])
+            if last_log is None or (now - last_log).total_seconds() >= 20:
+                self.last_vitals_log[patient["id"]] = now
+                desc = f"Telemetry updated: HR: {patient['heart_rate']} bpm, SpO₂: {patient['spo2']}%, BP: {patient['systolic_bp']}/{patient['diastolic_bp']} mmHg"
+                timeline_engine.add_event(
+                    patient_id=patient["id"],
+                    event_type="Clinical",
+                    title="Telemetry Vital Signs Update",
+                    description=desc,
+                    actor="System",
+                    metadata={
+                        "heart_rate": patient["heart_rate"],
+                        "spo2": patient["spo2"],
+                        "systolic_bp": patient["systolic_bp"],
+                        "diastolic_bp": patient["diastolic_bp"]
+                    }
+                )
 
     def _generate_alerts(self):
         for patient in self.patients:

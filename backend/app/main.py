@@ -17,6 +17,7 @@ from app.api.patients import router as patients_router
 from app.api.clinical_ai import router as clinical_ai_router
 from app.api.alerts import router as alerts_router
 from app.api import patient_profile
+from app.api.timeline_routes import router as timeline_router
 
 # =====================================================
 # WebSocket Routers
@@ -106,6 +107,11 @@ app.include_router(
 
 app.include_router(
     patient_profile.router,
+    prefix="/api",
+)
+
+app.include_router(
+    timeline_router,
     prefix="/api",
 )
 

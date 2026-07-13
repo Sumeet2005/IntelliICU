@@ -1,137 +1,138 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  Pill,
-  FlaskConical,
-  AlertTriangle,
-  Stethoscope,
-  ClipboardCheck,
-  Clock3,
-} from "lucide-react";
-
+import { Clock3, Download, FileText, Database, ShieldAlert } from "lucide-react";
 import { useClinicalAI } from "../../context/ClinicalAIContext";
+import { timelineService } from "../../services/timelineService";
+import TimelineItem from "./TimelineItem";
+import TimelineFilters from "./TimelineFilters";
+import TimelineSearch from "./TimelineSearch";
+import TimelineDrawer from "./TimelineDrawer";
 
 export default function ClinicalTimeline() {
-  const { selectedPatient } = useClinicalAI();
-  const timelineData = selectedPatient?.timeline || [];
+  const { selectedPatient, timelineEvents } = useClinicalAI();
+  const patientId = selectedPatient?.patient?.id;
 
-  const getEventConfig = (type) => {
-    const t = type?.toLowerCase() || "";
-    if (t.includes("admission")) {
-      return { title: type || "Admission", icon: ClipboardCheck, color: "bg-emerald-500" };
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!patientId) {
+      setFilteredEvents([]);
+      return;
     }
-    if (t.includes("medication")) {
-      return { title: type || "Medication", icon: Pill, color: "bg-blue-500" };
+
+    const fetchTimeline = async () => {
+      try {
+        const data = await timelineService.getTimeline(patientId, activeFilter, searchQuery);
+        setFilteredEvents(data || []);
+      } catch (err) {
+        console.error("Failed to load filtered timeline events:", err);
+      }
+    };
+
+    fetchTimeline();
+  }, [patientId, activeFilter, searchQuery, timelineEvents]);
+
+  const handleOpenDetails = (event) => {
+    setSelectedEvent(event);
+    setDrawerOpen(true);
+  };
+
+  const handleExport = async (format) => {
+    if (!patientId) return;
+    try {
+      await timelineService.downloadExport(patientId, format, activeFilter, searchQuery);
+    } catch (err) {
+      console.error("Failed to export clinical event logs:", err);
     }
-    if (t.includes("lab") || t.includes("laboratory")) {
-      return { title: type || "Laboratory", icon: FlaskConical, color: "bg-orange-500" };
-    }
-    if (t.includes("alert")) {
-      return { title: type || "Alert", icon: AlertTriangle, color: "bg-red-500" };
-    }
-    return { title: type || "Assessment", icon: Stethoscope, color: "bg-cyan-600" };
   };
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="rounded-[30px] bg-white border border-slate-200 shadow-xl p-7"
+      className="rounded-[30px] bg-white border border-slate-200 shadow-xl p-6 flex flex-col h-full"
     >
-      <div className="flex items-center justify-between">
-
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-50 pb-5">
         <div>
-
-          <h2 className="text-3xl font-black">
-
-            Clinical Timeline
-
-          </h2>
-
-          <p className="mt-2 text-slate-500">
-
-            Latest ICU Events
-
-          </p>
-
+          <h2 className="text-2xl font-black text-slate-800">Clinical Event Log</h2>
+          <p className="mt-1 text-xs text-slate-500">Chronological telemetry audit & actions</p>
         </div>
-
-        <Clock3
-          size={28}
-          className="text-cyan-600"
-        />
-
+        <Clock3 size={24} className="text-cyan-600 animate-pulse" />
       </div>
 
-      <div className="mt-8">
+      {/* Toolbar - Search, Filters, and Exports */}
+      <div className="mt-5 space-y-4">
+        <TimelineSearch value={searchQuery} onChange={setSearchQuery} />
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-b border-slate-100 pb-3">
+          <TimelineFilters activeFilter={activeFilter} onChangeFilter={setActiveFilter} />
+          
+          {/* Export Actions Group */}
+          <div className="flex gap-1.5 shrink-0 self-end">
+            <button
+              onClick={() => handleExport("pdf")}
+              disabled={!patientId}
+              className="flex items-center gap-1 rounded-xl bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-700 px-3 py-1.5 text-xs font-bold transition"
+              title="Export as PDF"
+            >
+              <FileText size={13} />
+              PDF
+            </button>
+            <button
+              onClick={() => handleExport("csv")}
+              disabled={!patientId}
+              className="flex items-center gap-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 text-emerald-700 px-3 py-1.5 text-xs font-bold transition"
+              title="Export as CSV"
+            >
+              <Download size={13} />
+              CSV
+            </button>
+            <button
+              onClick={() => handleExport("json")}
+              disabled={!patientId}
+              className="flex items-center gap-1 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 px-3 py-1.5 text-xs font-bold transition"
+              title="Export as JSON"
+            >
+              <Database size={13} />
+              JSON
+            </button>
+          </div>
+        </div>
+      </div>
 
-        {timelineData.length > 0 ? (
-          timelineData.map((event, index) => {
-            const config = getEventConfig(event.type);
-            const Icon = config.icon;
-
-            return (
-              <motion.div
-                key={event.id ?? index}
-                whileHover={{ x: 5 }}
-                className="flex gap-5 pb-8 last:pb-0"
-              >
-
-                <div className="flex flex-col items-center">
-
-                  <div
-                    className={`flex h-14 w-14 items-center justify-center rounded-2xl ${config.color}`}
-                  >
-
-                    <Icon
-                      className="text-white"
-                      size={24}
-                    />
-
-                  </div>
-
-                  {index !== timelineData.length - 1 && (
-                    <div className="mt-2 h-full w-1 rounded-full bg-slate-200"></div>
-                  )}
-
-                </div>
-
-                <div className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-
-                  <div className="flex items-center justify-between">
-
-                    <h3 className="text-xl font-bold">
-
-                      {config.title}
-
-                    </h3>
-
-                    <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold">
-
-                      {event.time}
-
-                    </span>
-
-                  </div>
-
-                  <p className="mt-3 leading-7 text-slate-600">
-
-                    {event.description}
-
-                  </p>
-
-                </div>
-
-              </motion.div>
-            );
-          })
+      {/* Events Stream List */}
+      <div className="mt-6 flex-1 overflow-y-auto pr-1 space-y-4 max-h-[500px] scrollbar-thin">
+        {filteredEvents.length > 0 ? (
+          filteredEvents.map((event, index) => (
+            <TimelineItem
+              key={event.id ?? index}
+              event={event}
+              isLast={index === filteredEvents.length - 1}
+              onOpenDetails={handleOpenDetails}
+            />
+          ))
         ) : (
-          <p className="text-center text-slate-500 py-6">
-            No timeline events recorded.
-          </p>
+          <div className="py-16 text-center">
+            <ShieldAlert size={36} className="mx-auto text-slate-300 mb-2" />
+            <h4 className="font-bold text-slate-700 text-sm">No Events Found</h4>
+            <p className="text-xs text-slate-400 mt-1 max-w-[200px] mx-auto">
+              No matching clinical logs recorded under these filters.
+            </p>
+          </div>
         )}
-
       </div>
 
+      {/* Event Details Slider Drawer */}
+      <TimelineDrawer
+        open={drawerOpen}
+        event={selectedEvent}
+        onClose={() => setDrawerOpen(false)}
+      />
     </motion.div>
   );
 }

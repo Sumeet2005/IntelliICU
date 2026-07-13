@@ -14,6 +14,8 @@ import { AlertEngine } from "../services/alertEngine";
 import { auditService } from "../services/auditService";
 import { escalationService } from "../services/escalationService";
 import { alertAnalyticsService } from "../services/alertAnalytics";
+import { timelineService } from "../services/timelineService";
+import { eventEngine } from "../services/eventEngine";
 
 const ClinicalAIContext = createContext();
 
@@ -78,6 +80,16 @@ export function ClinicalAIProvider({ children }) {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [auditTrail, setAuditTrail] = useState([]);
+  const [timelineEvents, setTimelineEvents] = useState([]);
+
+  const loadTimeline = async (patientId) => {
+    try {
+      const data = await timelineService.getTimeline(patientId);
+      setTimelineEvents(data || []);
+    } catch (err) {
+      console.error("Failed to load patient timeline:", err);
+    }
+  };
 
   const lastAnalyzedRef = useRef(null);
   const debounceTimerRef = useRef(null);
@@ -209,6 +221,10 @@ export function ClinicalAIProvider({ children }) {
 
   const acknowledgeAlert = (alertId, user = "Dr. Reyes") => {
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const alertItem = alerts.find(a => a.id === alertId);
+    if (alertItem) {
+      eventEngine.recordAlertAction(alertItem.patient_id, "Acknowledged", alertItem.message, user);
+    }
     setAlerts(prev => prev.map(a => {
       if (a.id !== alertId) return a;
       return {
@@ -229,6 +245,10 @@ export function ClinicalAIProvider({ children }) {
 
   const resolveAlert = (alertId, user = "Dr. Reyes") => {
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const alertItem = alerts.find(a => a.id === alertId);
+    if (alertItem) {
+      eventEngine.recordAlertAction(alertItem.patient_id, "Resolved", alertItem.message, user);
+    }
     setAlerts(prev => prev.map(a => {
       if (a.id !== alertId) return a;
       return {
@@ -250,6 +270,10 @@ export function ClinicalAIProvider({ children }) {
 
   const assignAlert = (alertId, assignee, user = "Dr. Reyes") => {
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const alertItem = alerts.find(a => a.id === alertId);
+    if (alertItem) {
+      eventEngine.recordAlertAction(alertItem.patient_id, `Assigned to ${assignee}`, alertItem.message, user);
+    }
     setAlerts(prev => prev.map(a => {
       if (a.id !== alertId) return a;
       return {
@@ -268,6 +292,11 @@ export function ClinicalAIProvider({ children }) {
 
   const escalateAlert = (alertId, user = "Dr. Reyes") => {
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const alertItem = alerts.find(a => a.id === alertId);
+    if (alertItem) {
+      const nextLvl = alertItem.escalationLevel === "L2" ? "L3" : "L2";
+      eventEngine.recordAlertAction(alertItem.patient_id, `Escalated to ${nextLvl} (Manual)`, alertItem.message, user);
+    }
     setAlerts(prev => prev.map(a => {
       if (a.id !== alertId) return a;
       const nextLvl = a.escalationLevel === "L2" ? "L3" : "L2";
@@ -300,6 +329,15 @@ export function ClinicalAIProvider({ children }) {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
+    if (patientId) {
+      loadTimeline(patientId);
+      const name = selectedPatient?.patient?.name || "Unknown";
+      eventEngine.recordPatientSelected(patientId, name).then(() => {
+        loadTimeline(patientId);
+      });
+    } else {
+      setTimelineEvents([]);
+    }
   }, [patientId]);
 
   const runAutoAnalysis = async (payload) => {
@@ -315,6 +353,9 @@ export function ClinicalAIProvider({ children }) {
       if (activeRequestRef.current === requestId) {
         setRecommendation(result);
         lastAnalyzedRef.current = payload;
+        eventEngine.recordAIAnalysis(patientId, payload.prediction.risk_score, payload.prediction.risk_level, true).then(() => {
+          loadTimeline(patientId);
+        });
       }
     } catch (err) {
       if (activeRequestRef.current === requestId) {
@@ -354,6 +395,14 @@ export function ClinicalAIProvider({ children }) {
     };
 
     const handlePatientUpdate = (message) => {
+      if (message?.type === "timeline_event") {
+        setTimelineEvents(prev => {
+          if (prev.some(e => e.id === message.data.id)) return prev;
+          return [message.data, ...prev];
+        });
+        return;
+      }
+
       if (!message?.data) return;
 
       setLastUpdated(message.timestamp ?? new Date().toLocaleTimeString());
@@ -431,6 +480,9 @@ export function ClinicalAIProvider({ children }) {
       if (activeRequestRef.current === requestId) {
         setRecommendation(result);
         lastAnalyzedRef.current = payload;
+        eventEngine.recordAIAnalysis(patientId, payload.prediction.risk_score, payload.prediction.risk_level, false).then(() => {
+          loadTimeline(patientId);
+        });
       }
       return result;
     } catch (err) {
@@ -489,6 +541,9 @@ export function ClinicalAIProvider({ children }) {
       alertAnalytics,
       assignAlert,
       escalateAlert,
+      timelineEvents,
+      loadTimeline,
+      setTimelineEvents,
     }),
     [
       selectedPatient,
@@ -505,6 +560,7 @@ export function ClinicalAIProvider({ children }) {
       auditTrail,
       escalatedAlerts,
       alertAnalytics,
+      timelineEvents,
     ]
   );
 
