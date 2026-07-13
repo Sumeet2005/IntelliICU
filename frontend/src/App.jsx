@@ -13,6 +13,8 @@ import Monitoring from "./pages/Monitoring";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
+import UserManagement from "./pages/UserManagement";
+import UserProfile from "./pages/UserProfile";
 import { AuthProvider } from "./context/AuthContext";
 import AuthGuard from "./components/auth/AuthGuard";
 import PermissionGuard from "./components/auth/PermissionGuard";
@@ -70,6 +72,20 @@ export default function App() {
                 <PermissionGuard requiredPermission="Settings" showFallback>
                   <Settings />
                 </PermissionGuard>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <PermissionGuard requiredPermission="UserManagement" showFallback>
+                  <UserManagement />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <UserProfile />
               }
             />
           </Route>

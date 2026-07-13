@@ -20,6 +20,7 @@ from app.api import patient_profile
 from app.api.timeline_routes import router as timeline_router
 from app.api.auth import router as auth_router
 from app.api.rbac import router as rbac_router
+from app.api.user_management import router as user_management_router, dept_router as department_router
 
 # =====================================================
 # WebSocket Routers
@@ -124,6 +125,16 @@ app.include_router(
 
 app.include_router(
     rbac_router,
+    prefix="/api",
+)
+
+app.include_router(
+    user_management_router,
+    prefix="/api",
+)
+
+app.include_router(
+    department_router,
     prefix="/api",
 )
 

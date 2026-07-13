@@ -6,6 +6,8 @@ import {
   BrainCircuit,
   BarChart3,
   Settings,
+  Shield,
+  User,
 } from "lucide-react";
 
 import { usePermission } from "../hooks/usePermission";
@@ -16,6 +18,8 @@ const menu = [
   { icon: Activity, title: "Live Monitoring", path: "/monitoring", permission: "Patients" },
   { icon: BrainCircuit, title: "AI Assistant", path: "/dashboard", permission: "ClinicalAI" },
   { icon: BarChart3, title: "Analytics", path: "/analytics", permission: "Analytics" },
+  { icon: Shield, title: "User Directory", path: "/users", permission: "UserManagement" },
+  { icon: User, title: "My Profile", path: "/profile" },
   { icon: Settings, title: "Settings", path: "/settings", permission: "Settings" },
 ];
 
