@@ -41,6 +41,7 @@ from app.websocket.simulator import simulator
 # =====================================================
 
 from app.database.session import check_db_connectivity
+from app.database.seeder import seed_database_if_empty
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -53,7 +54,8 @@ async def lifespan(app: FastAPI):
     print("=" * 60)
 
     # Validate database connection at boot
-    check_db_connectivity()
+    if check_db_connectivity():
+        seed_database_if_empty()
 
     # Start ICU Simulator
     asyncio.create_task(simulator.start())
