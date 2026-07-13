@@ -10,6 +10,12 @@ from app.websocket.manager import manager
 from app.alerts.manager import manager as alert_manager
 from app.alerts.models import AlertSeverity
 from app.services.timeline_engine import timeline_engine
+import uuid
+from app.database.session import SessionLocal
+from app.models.patient import Patient
+from app.models.admission import Admission
+from app.models.vital_sign import VitalSign
+from app.models.lab_result import LabResult
 
 
 class ICUSimulator:
@@ -97,6 +103,7 @@ class ICUSimulator:
             self._update_dashboard()
             self._update_patients()
             self._generate_alerts()
+            await manager.ping_all()
 
             timestamp = datetime.now().strftime("%H:%M:%S")
 
@@ -303,6 +310,43 @@ class ICUSimulator:
                         "diastolic_bp": patient["diastolic_bp"]
                     }
                 )
+
+            # Write-through to database to maintain PostgreSQL as source of truth
+            try:
+                db = SessionLocal()
+                try:
+                    adm = db.query(Admission).filter(Admission.patient_id == patient["id"]).first()
+                    if adm:
+                        # Sync status
+                        p_db = db.query(Patient).filter(Patient.id == patient["id"]).first()
+                        if p_db:
+                            p_db.status = patient["status"]
+                            
+                        # Add new VitalSign record
+                        v_db = VitalSign(
+                            id=f"vit-{str(uuid.uuid4())[:8]}",
+                            admission_id=adm.id,
+                            heart_rate=float(patient["heart_rate"]),
+                            systolic_bp=float(patient["systolic_bp"]),
+                            diastolic_bp=float(patient["diastolic_bp"]),
+                            respiratory_rate=float(patient["respiratory_rate"]),
+                            spo2=float(patient["spo2"]),
+                            temperature=float(patient["temperature"]),
+                            glasgow_coma_scale=15,
+                            urine_output_ml=50.0,
+                        )
+                        db.add(v_db)
+                        
+                        # Sync lactate
+                        l_db = db.query(LabResult).filter(LabResult.admission_id == adm.id).order_by(LabResult.collected_at.desc()).first()
+                        if l_db:
+                            l_db.lactate = float(patient["lactate"])
+                            
+                    db.commit()
+                finally:
+                    db.close()
+            except Exception:
+                pass
 
     def _generate_alerts(self):
         for patient in self.patients:

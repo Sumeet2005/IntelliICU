@@ -344,6 +344,34 @@ class ConnectionManager:
         for connection in disconnected:
             self.disconnect_monitor(connection)
 
+    async def ping_all(self):
+        """
+        Sends a heartbeat ping to all active clients and cleans up stale/dead connections.
+        """
+        for conn_list, disconnect_fn in [
+            (self.dashboard_connections, self.disconnect_dashboard),
+            (self.alert_connections, self.disconnect_alerts),
+            (self.monitor_connections, self.disconnect_monitor),
+        ]:
+            stale = []
+            for ws in list(conn_list):
+                try:
+                    await ws.send_json({"type": "ping"})
+                except Exception:
+                    stale.append(ws)
+            for ws in stale:
+                disconnect_fn(ws)
+
+        for pid in list(self.patient_connections.keys()):
+            stale = []
+            for ws in list(self.patient_connections[pid]):
+                try:
+                    await ws.send_json({"type": "ping"})
+                except Exception:
+                    stale.append(ws)
+            for ws in stale:
+                self.disconnect_patient(pid, ws)
+
     # =====================================================
     # Statistics
     # =====================================================
