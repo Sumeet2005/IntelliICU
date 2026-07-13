@@ -5,7 +5,7 @@ from app.models.patient import Patient
 from app.models.admission import Admission
 from app.models.vital_sign import VitalSign
 from app.models.lab_result import LabResult
-from app.database.models import DBUser, DBRole, DBDepartment, DBPermission
+from app.database.models import DBUser, DBRole, DBDepartment, DBPermission, DBAlert, DBTimelineEvent
 from app.repositories.rbac_repository import MOCK_ROLES, MOCK_PERMISSIONS
 from app.repositories.user_repository import MOCK_USERS
 
@@ -13,7 +13,7 @@ logger = logging.getLogger("app.database")
 
 def seed_database_if_empty():
     """
-    Seeds database with mock clinical records and users/roles/permissions if the tables are empty.
+    Seeds database with mock clinical records, users/roles/permissions, alerts, and timeline events if empty.
     """
     db = SessionLocal()
     try:
@@ -222,6 +222,72 @@ def seed_database_if_empty():
                     is_active=mock_user["is_active"]
                 ))
             db.add_all(users)
+            db.commit()
+
+        # 6. Seed alerts if empty
+        if db.query(DBAlert).count() == 0:
+            logger.info("🌱 Seeding default alerts...")
+            a1 = DBAlert(
+                id="SEPSIS-ICU-10248",
+                patient_id="ICU-10248",
+                patient_name="Amelia Chen",
+                bed="MICU-04",
+                severity="CRITICAL",
+                status="ACTIVE",
+                title="Critical Sepsis Risk",
+                message="Sepsis probability 93.0%",
+            )
+            a2 = DBAlert(
+                id="SPO2-ICU-10248",
+                patient_id="ICU-10248",
+                patient_name="Amelia Chen",
+                bed="MICU-04",
+                severity="HIGH",
+                status="ACTIVE",
+                title="Low Oxygen Saturation",
+                message="SpO₂ dropped to 89.0%",
+            )
+            db.add_all([a1, a2])
+            db.commit()
+
+        # 7. Seed timeline events if empty
+        if db.query(DBTimelineEvent).count() == 0:
+            logger.info("🌱 Seeding default timeline events...")
+            now = datetime.utcnow()
+            e1 = DBTimelineEvent(
+                id="mock-ev-1",
+                patient_id="ICU-10248",
+                timestamp=now,
+                time="07:45",
+                type="Clinical",
+                title="Admission",
+                description="Patient admitted to Medical ICU.",
+                actor="System",
+                metadata_json={"diagnosis": "Septic Shock", "bed": "MICU-04"}
+            )
+            e2 = DBTimelineEvent(
+                id="mock-ev-2",
+                patient_id="ICU-10248",
+                timestamp=now,
+                time="08:10",
+                type="Clinical",
+                title="Medication",
+                description="Meropenem initiated.",
+                actor="Nurse Kelly",
+                metadata_json={"route": "IV", "dose": "1g"}
+            )
+            e3 = DBTimelineEvent(
+                id="mock-ev-3",
+                patient_id="ICU-10248",
+                timestamp=now,
+                time="08:40",
+                type="Alerts",
+                title="Hypotension Alert",
+                description="Systolic Blood Pressure critically low: 82 mmHg",
+                actor="System",
+                metadata_json={"vitals": {"systolic_bp": 82, "diastolic_bp": 48}}
+            )
+            db.add_all([e1, e2, e3])
             db.commit()
 
         logger.info("✅ Seeder run complete!")

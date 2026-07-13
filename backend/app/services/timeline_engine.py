@@ -14,11 +14,12 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
 
 from app.websocket.manager import manager as ws_manager
+from app.database.session import SessionLocal
+from app.database.models import DBTimelineEvent
 
 class TimelineEngine:
     def __init__(self):
         self._events = {}
-        # Mock-gate seeding based on environment variable
         self._seed_mock = os.getenv("ICU_SEED_MOCK_DATA", "true").lower() == "true"
         if self._seed_mock:
             self._seed_mock_data()
@@ -99,12 +100,36 @@ class TimelineEngine:
         ]
 
     def add_event(self, patient_id: str, event_type: str, title: str, description: str, actor: str = "System", metadata: dict = None) -> dict:
+        now = datetime.now()
+        event_id = f"ev-{str(uuid.uuid4())[:8]}"
+
+        # Persist to PostgreSQL
+        try:
+            db = SessionLocal()
+            try:
+                db_event = DBTimelineEvent(
+                    id=event_id,
+                    patient_id=patient_id,
+                    timestamp=now,
+                    time=now.strftime("%H:%M"),
+                    type=event_type,
+                    title=title,
+                    description=description,
+                    actor=actor,
+                    metadata_json=metadata or {}
+                )
+                db.add(db_event)
+                db.commit()
+            finally:
+                db.close()
+        except Exception:
+            pass
+
+        # In-memory backup
         if patient_id not in self._events:
             self._events[patient_id] = []
-
-        now = datetime.now()
         event = {
-            "id": f"ev-{str(uuid.uuid4())[:8]}",
+            "id": event_id,
             "patient_id": patient_id,
             "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
             "time": now.strftime("%H:%M"),
@@ -136,6 +161,41 @@ class TimelineEngine:
         return event
 
     def get_patient_timeline(self, patient_id: str, event_type: str = None, search: str = None) -> list:
+        try:
+            db = SessionLocal()
+            try:
+                query = db.query(DBTimelineEvent).filter(DBTimelineEvent.patient_id == patient_id)
+                if event_type and event_type.lower() != "all":
+                    query = query.filter(DBTimelineEvent.type.ilike(event_type))
+                if search:
+                    term = f"%{search}%"
+                    query = query.filter(
+                        (DBTimelineEvent.title.ilike(term)) |
+                        (DBTimelineEvent.description.ilike(term)) |
+                        (DBTimelineEvent.actor.ilike(term))
+                    )
+                db_events = query.order_by(DBTimelineEvent.timestamp.desc()).all()
+                if db_events:
+                    return [
+                        {
+                            "id": ev.id,
+                            "patient_id": ev.patient_id,
+                            "timestamp": ev.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                            "time": ev.time,
+                            "type": ev.type,
+                            "title": ev.title,
+                            "description": ev.description,
+                            "actor": ev.actor,
+                            "metadata": ev.metadata_json or {}
+                        }
+                        for ev in db_events
+                    ]
+            finally:
+                db.close()
+        except Exception:
+            pass
+
+        # Fallback to local memory cache
         patient_events = self._events.get(patient_id, [])
 
         filtered = []
