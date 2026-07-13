@@ -163,6 +163,36 @@ app.include_router(
 # Root Endpoint
 # =====================================================
 
+from datetime import datetime
+from fastapi import Request
+from fastapi.responses import JSONResponse
+import logging
+
+logger = logging.getLogger("app.main")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(
+        f"Unhandled global exception: {str(exc)} | Path: {request.url.path}",
+        exc_info=True
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal server error occurred. Please contact administrator."}
+    )
+
+@app.get("/health")
+@app.get("/ready")
+@app.get("/live")
+async def health_check():
+    db_ok = check_db_connectivity()
+    return {
+        "status": "healthy" if db_ok else "degraded",
+        "database": "connected" if db_ok else "disconnected",
+        "services": "online",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
 @app.get("/")
 async def root():
     return {
