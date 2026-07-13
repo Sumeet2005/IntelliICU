@@ -22,6 +22,12 @@ class DBRole(Base):
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    
+    permissions = relationship(
+        "DBPermission",
+        secondary=role_permission_association,
+        backref="roles",
+    )
 
 class DBDepartment(Base):
     __tablename__ = "departments"

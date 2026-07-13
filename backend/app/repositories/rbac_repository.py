@@ -1,4 +1,6 @@
 from app.models.role import Role, Permission
+from app.database.session import SessionLocal
+from app.database.models import DBRole, DBPermission
 
 MOCK_PERMISSIONS = {
     "dashboard": Permission(id="perm-1", name="Dashboard", description="View dashboard stats and status"),
@@ -58,14 +60,68 @@ MOCK_ROLES = {
 class RBACRepository:
     @staticmethod
     def get_role_by_name(name: str) -> Role | None:
+        try:
+            db = SessionLocal()
+            try:
+                db_role = db.query(DBRole).filter(DBRole.name.ilike(name)).first()
+                if db_role:
+                    return Role(
+                        id=db_role.id,
+                        name=db_role.name,
+                        permissions=[p.name for p in db_role.permissions]
+                    )
+            finally:
+                db.close()
+        except Exception:
+            pass
+
+        # Fallback to mock
         return MOCK_ROLES.get(name.lower())
 
     @staticmethod
     def get_all_roles() -> list[Role]:
+        try:
+            db = SessionLocal()
+            try:
+                db_roles = db.query(DBRole).all()
+                if db_roles:
+                    return [
+                        Role(
+                            id=r.id,
+                            name=r.name,
+                            permissions=[p.name for p in r.permissions]
+                        )
+                        for r in db_roles
+                    ]
+            finally:
+                db.close()
+        except Exception:
+            pass
+
+        # Fallback to mock
         return list(MOCK_ROLES.values())
 
     @staticmethod
     def get_all_permissions() -> list[Permission]:
+        try:
+            db = SessionLocal()
+            try:
+                db_perms = db.query(DBPermission).all()
+                if db_perms:
+                    return [
+                        Permission(
+                            id=p.id,
+                            name=p.name,
+                            description=p.description
+                        )
+                        for p in db_perms
+                    ]
+            finally:
+                db.close()
+        except Exception:
+            pass
+
+        # Fallback to mock
         return list(MOCK_PERMISSIONS.values())
 
     @classmethod
