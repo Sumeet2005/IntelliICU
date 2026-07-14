@@ -47,7 +47,7 @@ smart-icu-kaggle/
 backend/vector_db/
 ml/
 models/
-data/
+backend/data/
 notebooks/
 *.pkl
 *.parquet
