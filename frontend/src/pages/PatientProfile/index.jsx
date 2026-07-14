@@ -9,6 +9,7 @@ import ClinicalTimeline from "../../components/patientProfile/ClinicalTimeline";
 import EvidencePanel from "../../components/patientProfile/EvidencePanel";
 import ExplainabilityPanel from "../../components/patientProfile/ExplainabilityPanel";
 import LabResults from "../../components/patientProfile/LabResults";
+import ChatPanel from "../../components/clinicalCopilot/ChatPanel";
 
 import { patientService } from "../../services/patientService";
 import { timelineService } from "../../services/timelineService";
@@ -159,6 +160,7 @@ export default function PatientProfile() {
           { id: "evidence", label: "Evidence" },
           { id: "explainability", label: "Explainability" },
           { id: "reports", label: "Reports" },
+          { id: "copilot", label: "Clinical Copilot" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -198,6 +200,10 @@ export default function PatientProfile() {
 
           {activeTab === "reports" && (
             <ReportsTab patientId={patientId} />
+          )}
+
+          {activeTab === "copilot" && (
+            <ChatPanel patientId={patientId} />
           )}
         </div>
 

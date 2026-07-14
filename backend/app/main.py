@@ -21,6 +21,7 @@ from app.api.timeline_routes import router as timeline_router
 from app.api.auth import router as auth_router
 from app.api.rbac import router as rbac_router
 from app.api.user_management import router as user_management_router, dept_router as department_router
+from app.api.clinical_copilot import router as clinical_copilot_router
 
 # =====================================================
 # WebSocket Routers
@@ -50,7 +51,7 @@ async def lifespan(app: FastAPI):
     """
 
     print("=" * 60)
-    print("🚀 IntelliICU Starting...")
+    print("STARTING: IntelliICU Starting...")
     print("=" * 60)
 
     # Validate database connection at boot
@@ -63,7 +64,7 @@ async def lifespan(app: FastAPI):
     yield
 
     print("=" * 60)
-    print("🛑 IntelliICU Shutdown")
+    print("SHUTDOWN: IntelliICU Shutdown")
     print("=" * 60)
 
 
@@ -85,6 +86,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "http://127.0.0.1:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -142,6 +144,11 @@ app.include_router(
 
 app.include_router(
     department_router,
+    prefix="/api",
+)
+
+app.include_router(
+    clinical_copilot_router,
     prefix="/api",
 )
 

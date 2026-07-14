@@ -28,7 +28,7 @@ export default function VitalsChart() {
 
       <div className="h-80">
 
-        <ResponsiveContainer>
+        <ResponsiveContainer width="100%" height="100%">
 
           <LineChart data={vitalsData}>
 

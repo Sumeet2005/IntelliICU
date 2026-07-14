@@ -92,6 +92,7 @@ export function ClinicalAIProvider({ children }) {
   };
 
   const lastAnalyzedRef = useRef(null);
+  const recommendationRef = useRef(null);
   const debounceTimerRef = useRef(null);
   const activeRequestRef = useRef(null);
 
@@ -325,6 +326,7 @@ export function ClinicalAIProvider({ children }) {
 
   useEffect(() => {
     lastAnalyzedRef.current = null;
+    recommendationRef.current = null;
     activeRequestRef.current = null;
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -345,13 +347,15 @@ export function ClinicalAIProvider({ children }) {
     activeRequestRef.current = requestId;
 
     try {
-      setLoading(true);
       setError(null);
 
       const result = await aiService.analyzePatient(payload);
 
       if (activeRequestRef.current === requestId) {
-        setRecommendation(result);
+        if (JSON.stringify(result) !== JSON.stringify(recommendationRef.current)) {
+          recommendationRef.current = result;
+          setRecommendation(result);
+        }
         lastAnalyzedRef.current = payload;
         eventEngine.recordAIAnalysis(patientId, payload.prediction.risk_score, payload.prediction.risk_level, true).then(() => {
           loadTimeline(patientId);
@@ -360,11 +364,6 @@ export function ClinicalAIProvider({ children }) {
     } catch (err) {
       if (activeRequestRef.current === requestId) {
         console.error("ClinicalAI auto-analyze error:", err);
-        setError("Auto AI analysis failed. Manual override available.");
-      }
-    } finally {
-      if (activeRequestRef.current === requestId) {
-        setLoading(false);
       }
     }
   };
@@ -410,6 +409,25 @@ export function ClinicalAIProvider({ children }) {
       setSelectedPatient(prev => {
         if (!prev || prev.patient?.id !== message.data.id) return prev;
         
+        // Compare only telemetry fields
+        const hrChanged = message.data.heart_rate !== undefined && message.data.heart_rate !== prev.vitals?.heart_rate;
+        const spo2Changed = message.data.spo2 !== undefined && message.data.spo2 !== prev.vitals?.spo2;
+        const tempChanged = message.data.temperature !== undefined && message.data.temperature !== prev.vitals?.temperature;
+        const rrChanged = message.data.respiratory_rate !== undefined && message.data.respiratory_rate !== prev.vitals?.respiratory_rate;
+        const sysBpChanged = message.data.systolic_bp !== undefined && message.data.systolic_bp !== prev.vitals?.blood_pressure?.systolic;
+        const diaBpChanged = message.data.diastolic_bp !== undefined && message.data.diastolic_bp !== prev.vitals?.blood_pressure?.diastolic;
+        const lactateChanged = message.data.lactate !== undefined && message.data.lactate !== prev.labs?.lactate;
+        
+        const scoreChanged = message.data.risk_score !== undefined && message.data.risk_score !== prev.patient?.risk_score;
+        const levelChanged = message.data.risk_level !== undefined && message.data.risk_level !== prev.patient?.risk_level;
+        const statusChanged = message.data.status !== undefined && message.data.status !== prev.patient?.status;
+
+        const anyChanged = hrChanged || spo2Changed || tempChanged || rrChanged || sysBpChanged || diaBpChanged || lactateChanged || scoreChanged || levelChanged || statusChanged;
+
+        if (!anyChanged) {
+          return prev;
+        }
+
         const updated = {
           ...prev,
           patient: {
@@ -478,7 +496,10 @@ export function ClinicalAIProvider({ children }) {
       const result = await aiService.analyzePatient(payload);
 
       if (activeRequestRef.current === requestId) {
-        setRecommendation(result);
+        if (JSON.stringify(result) !== JSON.stringify(recommendationRef.current)) {
+          recommendationRef.current = result;
+          setRecommendation(result);
+        }
         lastAnalyzedRef.current = payload;
         eventEngine.recordAIAnalysis(patientId, payload.prediction.risk_score, payload.prediction.risk_level, false).then(() => {
           loadTimeline(patientId);
@@ -507,6 +528,7 @@ export function ClinicalAIProvider({ children }) {
   }
 
   function clearAnalysis() {
+    recommendationRef.current = null;
     setRecommendation(null);
     setError(null);
   }

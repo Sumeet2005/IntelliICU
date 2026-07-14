@@ -15,7 +15,7 @@ export default function HeroBanner() {
       initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-900 via-[#0B2942] to-cyan-900 p-8 text-white shadow-2xl"
+      className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-900 via-[#0B2942] to-cyan-900 py-6 px-8 text-white shadow-2xl"
     >
       {/* Background Glow */}
       <div className="absolute -top-32 -right-20 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl"></div>
@@ -34,7 +34,7 @@ export default function HeroBanner() {
 
           </div>
 
-          <h1 className="mt-6 text-5xl font-black leading-tight">
+          <h1 className="mt-4 text-5xl font-black leading-tight">
 
             IntelliICU
 
@@ -46,7 +46,7 @@ export default function HeroBanner() {
 
           </h1>
 
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-300">
 
             Monitor ICU patients in real time, predict clinical deterioration,
             receive explainable AI recommendations, and support evidence-based
@@ -54,7 +54,7 @@ export default function HeroBanner() {
 
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-6 flex flex-wrap gap-4">
 
             <button className="rounded-xl bg-cyan-500 px-6 py-3 font-semibold hover:bg-cyan-400 transition flex items-center gap-2">
 

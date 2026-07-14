@@ -214,7 +214,7 @@ class ICUSimulator:
     async def start(self):
 
         print("=" * 60)
-        print("🚑 ICU Live Simulator Started")
+        print("SIMULATOR: ICU Live Simulator Started")
         print("=" * 60)
 
         while True:
@@ -415,7 +415,7 @@ class ICUSimulator:
             last_log = self.last_vitals_log.get(patient["id"])
             if last_log is None or (now - last_log).total_seconds() >= 20:
                 self.last_vitals_log[patient["id"]] = now
-                desc = f"Telemetry updated: HR: {patient['heart_rate']} bpm, SpO₂: {patient['spo2']}%, BP: {patient['systolic_bp']}/{patient['diastolic_bp']} mmHg"
+                desc = f"Telemetry updated: HR: {patient['heart_rate']} bpm, SpO2: {patient['spo2']}%, BP: {patient['systolic_bp']}/{patient['diastolic_bp']} mmHg"
                 timeline_engine.add_event(
                     patient_id=patient["id"],
                     event_type="Clinical",
@@ -490,7 +490,7 @@ class ICUSimulator:
                 bed=patient["bed"],
                 severity=AlertSeverity.HIGH,
                 title="Low Oxygen Saturation",
-                message=f"SpO₂ dropped to {patient['spo2']}%",
+                message=f"SpO2 dropped to {patient['spo2']}%",
             )
             if patient["temperature"] >= 39:
                 alert_manager.create_alert(

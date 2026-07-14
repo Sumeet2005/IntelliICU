@@ -129,7 +129,7 @@ export default function LiveAnalytics() {
 
           <div className="mt-8 h-80">
 
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%">
 
               <AreaChart data={heartRate}>
 
@@ -211,7 +211,7 @@ export default function LiveAnalytics() {
 
             <div className="mt-6 h-64">
 
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
 
                 <LineChart data={prediction}>
 

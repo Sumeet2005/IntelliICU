@@ -79,44 +79,46 @@ export default function HospitalAnalytics() {
           <TrendingUp className="text-cyan-600" size={18} />
         </div>
 
-        <div className="mt-8 h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadialBarChart
-              innerRadius="70%"
-              outerRadius="100%"
-              data={occupancy}
-              startAngle={90}
-              endAngle={-270}
+        <div className="relative mt-8 h-72 flex items-center justify-center">
+          <div className="w-full h-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart
+                innerRadius="80%"
+                outerRadius="100%"
+                data={occupancy}
+                startAngle={90}
+                endAngle={-270}
+              >
+                <PolarAngleAxis
+                  type="number"
+                  domain={[0, 100]}
+                  tick={false}
+                />
+
+                <RadialBar
+                  background
+                  dataKey="value"
+                  cornerRadius={12}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="absolute flex flex-col items-center justify-center text-center">
+            <motion.h1
+              key={occupancyValue}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="text-4xl font-black text-cyan-600 tracking-tight"
             >
-              <PolarAngleAxis
-                type="number"
-                domain={[0, 100]}
-                tick={false}
-              />
+              {occupancyValue}%
+            </motion.h1>
 
-              <RadialBar
-                background
-                dataKey="value"
-                cornerRadius={12}
-              />
-            </RadialBarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="-mt-24 text-center">
-          <motion.h1
-            key={occupancyValue}
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.3 }}
-            className="text-4xl font-black text-cyan-600 tracking-tight"
-          >
-            {occupancyValue}%
-          </motion.h1>
-
-          <span className="clinical-label mt-1 block">
-            Bed Occupancy
-          </span>
+            <span className="clinical-label mt-1 block">
+              Bed Occupancy
+            </span>
+          </div>
         </div>
       </motion.div>
 

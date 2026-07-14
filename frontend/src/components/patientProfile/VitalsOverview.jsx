@@ -214,7 +214,7 @@ export default function VitalsOverview() {
         ) : (
           <div className="mt-6">
             <div className="h-80">
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={history}
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}

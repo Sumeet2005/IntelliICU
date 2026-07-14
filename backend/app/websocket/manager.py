@@ -89,7 +89,7 @@ class ConnectionManager:
         self.dashboard_connections.append(websocket)
 
         print(
-            f"✅ Dashboard Connected | "
+            f"[OK] Dashboard Connected | "
             f"{len(self.dashboard_connections)} clients"
         )
 
@@ -112,7 +112,7 @@ class ConnectionManager:
             self.dashboard_connections.remove(websocket)
 
         print(
-            f"❌ Dashboard Disconnected | "
+            f"[DISCONNECT] Dashboard Disconnected | "
             f"{len(self.dashboard_connections)} clients"
         )
 
@@ -133,7 +133,7 @@ class ConnectionManager:
         ].append(websocket)
 
         print(
-            f"🩺 Patient Connected | "
+            f"[PATIENT CONNECT] Patient Connected | "
             f"{patient_id} | "
             f"{len(self.patient_connections[patient_id])} clients"
         )
@@ -154,7 +154,7 @@ class ConnectionManager:
             del self.patient_connections[patient_id]
 
         print(
-            f"🩺 Patient Disconnected | {patient_id}"
+            f"[PATIENT DISCONNECT] Patient Disconnected | {patient_id}"
         )
 
     # =====================================================
@@ -171,7 +171,7 @@ class ConnectionManager:
         self.alert_connections.append(websocket)
 
         print(
-            f"🚨 Alert Client Connected | "
+            f"[ALERT CONNECT] Alert Client Connected | "
             f"{len(self.alert_connections)} clients"
         )
 
@@ -197,7 +197,7 @@ class ConnectionManager:
         self.monitor_connections.append(websocket)
 
         print(
-            f"🖥 Monitor Connected | "
+            f"[MONITOR CONNECT] Monitor Connected | "
             f"{len(self.monitor_connections)} clients"
         )
 

@@ -24,7 +24,7 @@ export default function BedOccupancyChart() {
 
       <div className="h-72">
 
-        <ResponsiveContainer>
+        <ResponsiveContainer width="100%" height="100%">
 
           <PieChart>
 

@@ -7,9 +7,8 @@ Endpoint:
     ws://localhost:8000/ws/patient/{patient_id}
 """
 
-from fastapi import APIRouter
-from fastapi import WebSocket
-from fastapi import WebSocketDisconnect
+import asyncio
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.websocket.manager import manager
 
@@ -24,44 +23,22 @@ async def patient_websocket(
     """
     Individual Patient Live Stream
 
-    Each connected client receives live updates
-    only for the requested patient.
+    Each connected client receives live updates only for the requested patient.
     """
 
-    await manager.connect_patient(
-        patient_id,
-        websocket,
-    )
+    await manager.connect_patient(patient_id, websocket)
 
     try:
-
         while True:
-
-            # Keep WebSocket alive.
-            #
-            # Later we can support commands such as:
-            # subscribe
-            # unsubscribe
-            # pause
-            # resume
-            # heartbeat
-
-            await websocket.receive_text()
+            try:
+                await asyncio.wait_for(websocket.receive_text(), timeout=30)
+            except asyncio.TimeoutError:
+                # No message from client in 30s — keep the connection alive.
+                continue
 
     except WebSocketDisconnect:
-
-        manager.disconnect_patient(
-            patient_id,
-            websocket,
-        )
+        manager.disconnect_patient(patient_id, websocket)
 
     except Exception as exc:
-
-        print(
-            f"❌ Patient WebSocket Error ({patient_id}): {exc}"
-        )
-
-        manager.disconnect_patient(
-            patient_id,
-            websocket,
-        )
+        print(f"[ERROR] Patient WebSocket Error ({patient_id}): {exc}")
+        manager.disconnect_patient(patient_id, websocket)
