@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Users,
   Activity,
-  BrainCircuit,
   BarChart3,
   Settings,
   Shield,
@@ -12,24 +11,52 @@ import {
   Building2,
 } from "lucide-react";
 
-import { usePermission } from "../hooks/usePermission";
-
-const menu = [
-  { icon: LayoutDashboard, title: "Dashboard", path: "/dashboard", permission: "Dashboard" },
-  { icon: Users, title: "Patients", path: "/dashboard", permission: "Patients" },
-  { icon: Activity, title: "Live Monitoring", path: "/monitoring", permission: "Patients" },
-  { icon: TrendingUp, title: "Telemetry Trends", path: "/telemetry", permission: "Patients" },
-  { icon: BrainCircuit, title: "AI Assistant", path: "/dashboard", permission: "ClinicalAI" },
-  { icon: Building2, title: "Hospital AI", path: "/hospital-assistant", permission: "ClinicalAI" },
-  { icon: BarChart3, title: "Analytics", path: "/analytics", permission: "Analytics" },
-  { icon: Shield, title: "User Directory", path: "/users", permission: "UserManagement" },
-  { icon: User, title: "My Profile", path: "/profile" },
-  { icon: Settings, title: "Settings", path: "/settings", permission: "Settings" },
-];
+import { useAuth } from "../context/AuthContext";
 
 export default function Sidebar() {
-  const { hasPermission } = usePermission();
-  const visibleMenu = menu.filter(item => !item.permission || hasPermission(item.permission));
+  const { user } = useAuth();
+  const role = user?.role?.toLowerCase();
+
+  let menu = [];
+
+  if (role === "hospitaladmin" || role === "superadmin") {
+    menu = [
+      { icon: LayoutDashboard, title: "Admin Dashboard", path: "/dashboard" },
+      { icon: Shield, title: "User Directory", path: "/users" },
+      { icon: Settings, title: "Settings", path: "/settings" },
+      { icon: User, title: "My Profile", path: "/profile" },
+    ];
+  } else if (role === "doctor") {
+    menu = [
+      { icon: LayoutDashboard, title: "Doctor Dashboard", path: "/dashboard" },
+      { icon: Activity, title: "Live Monitoring", path: "/monitoring" },
+      { icon: TrendingUp, title: "Telemetry Trends", path: "/telemetry" },
+      { icon: Building2, title: "Hospital AI", path: "/hospital-assistant" },
+      { icon: User, title: "My Profile", path: "/profile" },
+    ];
+  } else if (role === "nurse") {
+    menu = [
+      { icon: LayoutDashboard, title: "Nursing Dashboard", path: "/dashboard" },
+      { icon: Activity, title: "Live Monitoring", path: "/monitoring" },
+      { icon: TrendingUp, title: "Telemetry Trends", path: "/telemetry" },
+      { icon: User, title: "My Profile", path: "/profile" },
+    ];
+  } else if (role === "icumanager") {
+    menu = [
+      { icon: LayoutDashboard, title: "Operations Dashboard", path: "/dashboard" },
+      { icon: Activity, title: "Live Monitoring", path: "/monitoring" },
+      { icon: TrendingUp, title: "Telemetry Trends", path: "/telemetry" },
+      { icon: BarChart3, title: "Analytics", path: "/analytics" },
+      { icon: Settings, title: "Settings", path: "/settings" },
+      { icon: User, title: "My Profile", path: "/profile" },
+    ];
+  } else {
+    // Default fallback
+    menu = [
+      { icon: LayoutDashboard, title: "Dashboard", path: "/dashboard" },
+      { icon: User, title: "My Profile", path: "/profile" },
+    ];
+  }
 
   return (
     <aside className="flex w-72 flex-col bg-[#07233F] text-white">
@@ -39,7 +66,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="mt-8 flex-1">
-        {visibleMenu.map((item) => {
+        {menu.map((item) => {
           const Icon = item.icon;
 
           return (
@@ -69,3 +96,4 @@ export default function Sidebar() {
     </aside>
   );
 }
+

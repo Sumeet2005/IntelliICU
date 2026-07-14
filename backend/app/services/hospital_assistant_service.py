@@ -195,7 +195,7 @@ class HospitalAssistantService:
         system_msg = self._build_system_message(snapshot, evidence_block)
         messages   = self._get_messages(session_id, system_msg, question)
 
-        llm_context = {"conversation_history": messages}
+        llm_context = {"conversation_history": messages, "snapshot": snapshot}
         response    = self.llm.generate_response(question, llm_context)
 
         # Persist assistant turn
@@ -226,7 +226,7 @@ class HospitalAssistantService:
         system_msg = self._build_system_message(snapshot, evidence_block)
         messages   = self._get_messages(session_id, system_msg, question)
 
-        llm_context = {"conversation_history": messages}
+        llm_context = {"conversation_history": messages, "snapshot": snapshot}
 
         for chunk in self.llm.generate_stream(question, llm_context):
             if chunk["type"] == "final":

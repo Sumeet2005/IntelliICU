@@ -20,9 +20,10 @@ async def get_timeline(
     Get timeline events for a patient with optional type filter and search query.
     """
     # Verify patient exists
-    patient = next((p for p in simulator.patients if p["id"] == patient_id), None)
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
+    if patient_id != "SYSTEM":
+        patient = next((p for p in simulator.patients if p["id"] == patient_id), None)
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
 
     events = timeline_engine.get_patient_timeline(patient_id, event_type, search)
     return events
@@ -35,9 +36,10 @@ async def log_event(
     """
     Log a new timeline event for a patient.
     """
-    patient = next((p for p in simulator.patients if p["id"] == patient_id), None)
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
+    if patient_id != "SYSTEM":
+        patient = next((p for p in simulator.patients if p["id"] == patient_id), None)
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
 
     event = timeline_engine.add_event(
         patient_id=patient_id,
@@ -59,8 +61,11 @@ async def export_timeline(
     """
     Export patient timeline in CSV, JSON, or PDF format.
     """
-    patient = next((p for p in simulator.patients if p["id"] == patient_id), None)
-    patient_name = patient["name"] if patient else "Unknown"
+    patient_name = "System Logs"
+    if patient_id != "SYSTEM":
+        patient = next((p for p in simulator.patients if p["id"] == patient_id), None)
+        patient_name = patient["name"] if patient else "Unknown"
+
 
     events = timeline_engine.get_patient_timeline(patient_id, event_type, search)
 

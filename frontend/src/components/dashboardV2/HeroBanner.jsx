@@ -1,15 +1,53 @@
 import { motion } from "framer-motion";
 import {
   BrainCircuit,
-  Activity,
-  ShieldCheck,
-  Users,
-  AlertTriangle,
   ArrowRight,
   Sparkles,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 export default function HeroBanner() {
+  const { user } = useAuth();
+  const role = user?.role?.toLowerCase();
+
+  let label = "AI Clinical Decision Support System";
+  let title = "IntelliICU";
+  let coloredTitle = "Clinical Command Center";
+  let subtitle = "Monitor ICU patients in real time, predict clinical deterioration, receive explainable AI recommendations, and support evidence-based medical decisions.";
+  let cardTitle = "Real-Time Clinical Status";
+  let cardBody = "The AI Decision Support Engine has identified 3 high-risk patients with elevated probability of sepsis. Broad-spectrum protocol checklists are currently outstanding on beds MICU-04 and MICU-07.";
+  let footerLeft = "Next scheduled AI analysis: Under 2 mins";
+  let footerRight = "100% telemetry online";
+
+  if (role === "hospitaladmin" || role === "superadmin") {
+    label = "AI Clinical Decision Support System | Administrative Portal";
+    title = "System Control";
+    coloredTitle = "IntelliICU Control Center";
+    subtitle = "Manage administrative users, update system settings, verify clinical limits and configuration thresholds, and audit system performance metrics.";
+    cardTitle = "System Control Summary";
+    cardBody = "All REST endpoints and WebSocket relays are online. System health check completed successfully. No critical database failures reported.";
+    footerLeft = "System uptime: 99.98%";
+    footerRight = "All services operational";
+  } else if (role === "nurse") {
+    label = "AI Clinical Decision Support System | Nursing Workspace";
+    title = "Nursing Suite";
+    coloredTitle = "Care & Monitoring";
+    subtitle = "View your assigned patient charts, track active nursing tasks, track live alert logs, and receive nursing care assistant recommendations.";
+    cardTitle = "Active Care Summary";
+    cardBody = "Currently monitoring active patient beds. Next vitals checks are scheduled. 2 alerts require active verification on bed MICU-04.";
+    footerLeft = "Nursing shift: 12-hour AM/PM";
+    footerRight = "Care protocols online";
+  } else if (role === "icumanager") {
+    label = "AI Clinical Decision Support System | Operations Portal";
+    title = "ICU Operations";
+    coloredTitle = "Operations Command";
+    subtitle = "Review bed occupancy, track admissions/discharges, evaluate alert response times, and analyze clinical and operational efficiency.";
+    cardTitle = "Operational Status";
+    cardBody = "Bed occupancy is currently at 80% (8/10 beds filled). Average alert response time is 45 seconds. Analytics report is ready for export.";
+    footerLeft = "Census: 8 active patients";
+    footerRight = "80% Bed utilization";
+  }
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 25 }}
@@ -30,17 +68,17 @@ export default function HeroBanner() {
 
             <BrainCircuit size={18} />
 
-            AI Clinical Decision Support System
+            {label}
 
           </div>
 
           <h1 className="mt-4 text-5xl font-black leading-tight">
 
-            IntelliICU
+            {title}
 
             <span className="block text-cyan-300">
 
-              Clinical Command Center
+              {coloredTitle}
 
             </span>
 
@@ -48,29 +86,9 @@ export default function HeroBanner() {
 
           <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-300">
 
-            Monitor ICU patients in real time, predict clinical deterioration,
-            receive explainable AI recommendations, and support evidence-based
-            medical decisions.
+            {subtitle}
 
           </p>
-
-          <div className="mt-6 flex flex-wrap gap-4">
-
-            <button className="rounded-xl bg-cyan-500 px-6 py-3 font-semibold hover:bg-cyan-400 transition flex items-center gap-2">
-
-              Launch AI Assistant
-
-              <ArrowRight size={18} />
-
-            </button>
-
-            <button className="rounded-xl border border-white/20 bg-white/10 px-6 py-3 backdrop-blur hover:bg-white/20 transition">
-
-              View Live Monitoring
-
-            </button>
-
-          </div>
 
         </div>
 
@@ -80,17 +98,17 @@ export default function HeroBanner() {
             <div className="flex items-center gap-3">
               <Sparkles className="text-cyan-300 animate-pulse" />
               <h3 className="font-semibold text-base">
-                Real-Time Clinical Status
+                {cardTitle}
               </h3>
             </div>
 
             <p className="mt-4 text-sm leading-7 text-slate-300">
-              The AI Decision Support Engine has identified <strong>3 high-risk patients</strong> with elevated probability of sepsis. Broad-spectrum protocol checklists are currently outstanding on beds MICU-04 and MICU-07.
+              {cardBody}
             </p>
             
             <div className="mt-6 border-t border-white/10 pt-4 flex justify-between text-xs text-slate-400">
-              <span>Next scheduled AI analysis: Under 2 mins</span>
-              <span className="text-cyan-300 font-bold">100% telemetry online</span>
+              <span>{footerLeft}</span>
+              <span className="text-cyan-300 font-bold">{footerRight}</span>
             </div>
           </div>
         </div>
@@ -99,4 +117,4 @@ export default function HeroBanner() {
 
     </motion.section>
   );
-}
+}

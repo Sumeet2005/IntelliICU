@@ -17,6 +17,7 @@ import UserManagement from "./pages/UserManagement";
 import UserProfile from "./pages/UserProfile";
 import Telemetry from "./pages/Telemetry";
 import HospitalAssistant from "./pages/HospitalAssistant";
+import Unauthorized from "./pages/Unauthorized";
 import { AuthProvider } from "./context/AuthContext";
 import AuthGuard from "./components/auth/AuthGuard";
 import PermissionGuard from "./components/auth/PermissionGuard";
@@ -106,6 +107,7 @@ export default function App() {
                 </PermissionGuard>
               }
             />
+            <Route path="/unauthorized" element={<Unauthorized />} />
           </Route>
         </Routes>
       </BrowserRouter>

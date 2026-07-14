@@ -235,6 +235,14 @@ class ICUSimulator:
                 }
             )
 
+            for patient in self.patients:
+                try:
+                    patient["telemetry_trends"] = telemetry_engine.build_telemetry_trends_payload(
+                        patient["id"]
+                    )
+                except Exception:
+                    patient["telemetry_trends"] = {}
+
             await manager.broadcast(
                 {
                     "type": "patients_update",
@@ -255,21 +263,13 @@ class ICUSimulator:
             )
             
             for patient in self.patients:
-                # Build compact telemetry trends and embed in the existing payload
-                try:
-                    telemetry_trends = telemetry_engine.build_telemetry_trends_payload(
-                        patient["id"]
-                    )
-                except Exception:
-                    telemetry_trends = {}
-
                 await manager.broadcast_patient(
                     patient["id"],
                     {
                         "type": "patient_update",
                         "timestamp": timestamp,
                         "data": patient,
-                        "telemetry_trends": telemetry_trends,
+                        "telemetry_trends": patient["telemetry_trends"],
                     }
                 )
 

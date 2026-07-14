@@ -29,6 +29,7 @@ import {
   ChevronRight, RefreshCw, Zap, BookOpen,
 } from "lucide-react";
 import { hospitalAssistantService } from "../../services/hospitalAssistantService";
+import StreamingMarkdown from "../clinicalCopilot/StreamingMarkdown";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -170,7 +171,7 @@ function ChatMessage({ msg }) {
             : "bg-white border border-slate-100 text-slate-800 rounded-tl-sm"
         }`}
       >
-        {msg.content}
+        {isUser ? msg.content : <StreamingMarkdown text={msg.content} />}
       </div>
     </div>
   );
@@ -606,8 +607,11 @@ export default function HospitalAssistant() {
                     <BrainCircuit size={12} className="text-white" />
                   </div>
                   <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white border border-slate-100 px-4 py-2.5 text-xs font-medium leading-relaxed text-slate-800 shadow-sm">
-                    {streamingText || <Loader2 size={14} className="animate-spin text-slate-300" />}
-                    {streaming && <StreamingCursor />}
+                    {streamingText ? (
+                      <StreamingMarkdown text={streamingText} isStreaming={streaming} />
+                    ) : (
+                      <Loader2 size={14} className="animate-spin text-slate-300" />
+                    )}
                   </div>
                 </div>
               )}
