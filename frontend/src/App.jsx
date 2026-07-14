@@ -15,6 +15,8 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import UserManagement from "./pages/UserManagement";
 import UserProfile from "./pages/UserProfile";
+import Telemetry from "./pages/Telemetry";
+import HospitalAssistant from "./pages/HospitalAssistant";
 import { AuthProvider } from "./context/AuthContext";
 import AuthGuard from "./components/auth/AuthGuard";
 import PermissionGuard from "./components/auth/PermissionGuard";
@@ -86,6 +88,22 @@ export default function App() {
               path="/profile"
               element={
                 <UserProfile />
+              }
+            />
+            <Route
+              path="/telemetry"
+              element={
+                <PermissionGuard requiredPermission="Patients" showFallback>
+                  <Telemetry />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="/hospital-assistant"
+              element={
+                <PermissionGuard requiredPermission="ClinicalAI" showFallback>
+                  <HospitalAssistant />
+                </PermissionGuard>
               }
             />
           </Route>

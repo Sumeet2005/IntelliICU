@@ -1,30 +1,41 @@
 """
+app/ai/providers/ollama.py
+
 Ollama LLM Provider.
 Integrates local Ollama instances via HTTP API with streaming support.
+Supports dynamic parameter updates (model, temperature, max tokens) at runtime.
 """
 
-import os
+from __future__ import annotations
+
 import json
 import logging
+import os
 import urllib.request
-from typing import Dict, Any, Generator
+from typing import Any, Dict, Generator
 
+from app.ai.config_manager import ai_config
 from app.ai.providers.base import BaseLLMProvider
 from app.ai.providers.mock import MockLLMProvider
 
 logger = logging.getLogger(__name__)
+
 
 class OllamaLLMProvider(BaseLLMProvider):
     """
     Connects to a local Ollama instance to analyze patient charts.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
-        self.model = os.getenv("OLLAMA_MODEL", "llama3")
         self.mock_fallback = MockLLMProvider()
 
     def generate(self, question: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        # Retrieve latest configuration dynamically
+        model   = ai_config.get("model", "llama3")
+        temp    = ai_config.get("temperature", 0.2)
+        max_tok = ai_config.get("max_tokens", 1024)
+
         system_prompt = (
             "You are an expert ICU Clinical Decision Support AI. Analyze the provided patient context and answer the clinical question.\n"
             "You MUST respond ONLY with a valid JSON object matching this schema:\n"
@@ -43,7 +54,7 @@ class OllamaLLMProvider(BaseLLMProvider):
         user_content = f"Patient Clinical Context:\n{json.dumps(context, indent=2)}\n\nQuestion:\n{question}"
 
         payload = {
-            "model": self.model,
+            "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content}
@@ -51,7 +62,8 @@ class OllamaLLMProvider(BaseLLMProvider):
             "stream": False,
             "format": "json",
             "options": {
-                "temperature": 0.2
+                "temperature": temp,
+                "num_predict": max_tok,
             }
         }
 
@@ -62,8 +74,8 @@ class OllamaLLMProvider(BaseLLMProvider):
                 headers={"Content-Type": "application/json"},
                 method="POST"
             )
-            # Timeout set to 10 seconds to detect offline services quickly
-            with urllib.request.urlopen(req, timeout=10.0) as response:
+            # Timeout set to 15 seconds to detect offline services quickly
+            with urllib.request.urlopen(req, timeout=15.0) as response:
                 body = response.read().decode("utf-8")
                 res_data = json.loads(body)
                 raw_text = res_data["message"]["content"]
@@ -76,10 +88,15 @@ class OllamaLLMProvider(BaseLLMProvider):
 
                 return data
         except Exception as e:
-            logger.warning(f"Ollama completion failed: {e}. Falling back to MockProvider.")
+            logger.warning("[OllamaProvider] Completion failed: %s. Falling back to MockProvider.", e)
             return self.mock_fallback.generate(question, context)
 
     def generate_stream(self, question: str, context: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:
+        # Retrieve latest configuration dynamically
+        model   = ai_config.get("model", "llama3")
+        temp    = ai_config.get("temperature", 0.2)
+        max_tok = ai_config.get("max_tokens", 1024)
+
         system_prompt = (
             "You are an expert ICU Clinical Decision Support AI. Analyze the provided patient context and answer the clinical question.\n"
             "You MUST respond ONLY with a valid JSON object matching this schema:\n"
@@ -98,7 +115,7 @@ class OllamaLLMProvider(BaseLLMProvider):
         user_content = f"Patient Clinical Context:\n{json.dumps(context, indent=2)}\n\nQuestion:\n{question}"
 
         payload = {
-            "model": self.model,
+            "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content}
@@ -106,7 +123,8 @@ class OllamaLLMProvider(BaseLLMProvider):
             "stream": True,
             "format": "json",
             "options": {
-                "temperature": 0.2
+                "temperature": temp,
+                "num_predict": max_tok,
             }
         }
 
@@ -143,5 +161,31 @@ class OllamaLLMProvider(BaseLLMProvider):
                     yield {"type": "final", "content": self.mock_fallback.generate(question, context)}
 
         except Exception as e:
-            logger.warning(f"Ollama streaming failed: {e}. Falling back to MockProvider.")
+            logger.warning("[OllamaProvider] Streaming failed: %s. Falling back to MockProvider.", e)
             yield from self.mock_fallback.generate_stream(question, context)
+
+    def health_check(self) -> bool:
+        """
+        Verify connection to the Ollama server by hitting its root endpoint.
+        """
+        try:
+            req = urllib.request.Request(f"{self.host}/", method="GET")
+            with urllib.request.urlopen(req, timeout=2.0) as response:
+                return response.status == 200
+        except Exception:
+            return False
+
+    def list_installed_models(self) -> List[str]:
+        """
+        Query Ollama's local registry (/api/tags) to list download models.
+        """
+        try:
+            req = urllib.request.Request(f"{self.host}/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=3.0) as response:
+                body = response.read().decode("utf-8")
+                data = json.loads(body)
+                models = [m["name"] for m in data.get("models", [])]
+                return models
+        except Exception as e:
+            logger.warning("[OllamaProvider] Failed to list models: %s", e)
+            return []

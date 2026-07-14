@@ -8,6 +8,8 @@ import {
   Settings,
   Shield,
   User,
+  TrendingUp,
+  Building2,
 } from "lucide-react";
 
 import { usePermission } from "../hooks/usePermission";
@@ -16,7 +18,9 @@ const menu = [
   { icon: LayoutDashboard, title: "Dashboard", path: "/dashboard", permission: "Dashboard" },
   { icon: Users, title: "Patients", path: "/dashboard", permission: "Patients" },
   { icon: Activity, title: "Live Monitoring", path: "/monitoring", permission: "Patients" },
+  { icon: TrendingUp, title: "Telemetry Trends", path: "/telemetry", permission: "Patients" },
   { icon: BrainCircuit, title: "AI Assistant", path: "/dashboard", permission: "ClinicalAI" },
+  { icon: Building2, title: "Hospital AI", path: "/hospital-assistant", permission: "ClinicalAI" },
   { icon: BarChart3, title: "Analytics", path: "/analytics", permission: "Analytics" },
   { icon: Shield, title: "User Directory", path: "/users", permission: "UserManagement" },
   { icon: User, title: "My Profile", path: "/profile" },

@@ -16,6 +16,7 @@ from app.models.patient import Patient
 from app.models.admission import Admission
 from app.models.vital_sign import VitalSign
 from app.models.lab_result import LabResult
+from app.telemetry.trend_engine import telemetry_engine
 
 
 class ICUSimulator:
@@ -254,12 +255,21 @@ class ICUSimulator:
             )
             
             for patient in self.patients:
+                # Build compact telemetry trends and embed in the existing payload
+                try:
+                    telemetry_trends = telemetry_engine.build_telemetry_trends_payload(
+                        patient["id"]
+                    )
+                except Exception:
+                    telemetry_trends = {}
+
                 await manager.broadcast_patient(
                     patient["id"],
                     {
                         "type": "patient_update",
                         "timestamp": timestamp,
-                        "data": patient
+                        "data": patient,
+                        "telemetry_trends": telemetry_trends,
                     }
                 )
 
@@ -429,6 +439,23 @@ class ICUSimulator:
                         "diastolic_bp": patient["diastolic_bp"]
                     }
                 )
+
+            # Ingest into the telemetry trend engine (in-memory, non-blocking)
+            try:
+                telemetry_engine.ingest(
+                    patient_id=patient["id"],
+                    vitals={
+                        "heart_rate":       patient["heart_rate"],
+                        "systolic_bp":      patient["systolic_bp"],
+                        "diastolic_bp":     patient["diastolic_bp"],
+                        "respiratory_rate": patient["respiratory_rate"],
+                        "spo2":             patient["spo2"],
+                        "temperature":      patient["temperature"],
+                    },
+                    patient_name=patient.get("name", ""),
+                )
+            except Exception:
+                pass
 
             # Write-through to database to maintain PostgreSQL as source of truth
             try:

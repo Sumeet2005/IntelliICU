@@ -77,22 +77,69 @@ class KnowledgeService:
         """
         Return the top-k most relevant documents for ``query``.
 
-        Uses semantic (embedding) search when available; falls back to
-        keyword scoring otherwise.
-
-        Parameters
-        ----------
-        query    : Natural-language or keyword query.
-        top_k    : Maximum results (default 3).
-        category : If set, restrict to that clinical category.
-
-        Returns
-        -------
-        List of document dicts (all fields + ``score``) sorted by relevance.
+        First queries ChromaDB using pre-computed embeddings.
+        If ChromaDB fails or has no documents, automatically falls back
+        to the existing in-memory RAG (semantic or keyword).
         """
-        if not query or not self._store:
+        if not query:
             return []
 
+        # 1. Hybrid Search Phase: Try ChromaDB first
+        try:
+            from app.vector_db.chroma_service import chroma_service
+            if chroma_service.health_check():
+                # We need the query embedding vector
+                if self._semantic_ready and self._embedder:
+                    from app.rag.embedding_service import _QUERY_PREFIX
+                    q_vec = self._embedder._model.encode(
+                        _QUERY_PREFIX + query,
+                        normalize_embeddings=True,
+                        convert_to_numpy=True,
+                    ).tolist()
+
+                    where_filter = None
+                    if category:
+                        where_filter = {"category": category}
+
+                    res = chroma_service.query_documents(
+                        query_embeddings=q_vec,
+                        n_results=top_k,
+                        where=where_filter
+                    )
+
+                    # Convert Chroma format to List[Dict] with expected keys
+                    docs = []
+                    if res and res.get("ids") and len(res["ids"]) > 0 and len(res["ids"][0]) > 0:
+                        for i in range(len(res["ids"][0])):
+                            doc_id = res["ids"][0][i]
+                            distance = res["distances"][0][i] if "distances" in res else 0.0
+                            # Convert L2 distance to cosine similarity
+                            sim_score = max(0.0, min(1.0, 1.0 - (distance / 2.0)))
+
+                            metadata = res["metadatas"][0][i] if "metadatas" in res else {}
+                            content = res["documents"][0][i] if "documents" in res else ""
+                            
+                            tags_raw = metadata.get("tags", "")
+                            tags = tags_raw.split(",") if isinstance(tags_raw, str) and tags_raw else []
+
+                            docs.append({
+                                "id": doc_id,
+                                "title": metadata.get("title", ""),
+                                "source": metadata.get("source", metadata.get("organization", "")),
+                                "category": metadata.get("category", ""),
+                                "section": metadata.get("section", ""),
+                                "content": content,
+                                "tags": tags,
+                                "score": round(sim_score, 4),
+                            })
+                        
+                        if docs:
+                            logger.info("[KnowledgeService] Hybrid search: ChromaDB returned %d results.", len(docs))
+                            return docs
+        except Exception as e:
+            logger.warning("[KnowledgeService] ChromaDB query failed; falling back: %s", e)
+
+        # 2. Fallback Phase: In-memory RAG
         if self._semantic_ready:
             return self._semantic_search(query, top_k, category)
         else:

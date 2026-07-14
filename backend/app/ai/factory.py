@@ -11,13 +11,15 @@ from app.ai.providers.gemini import GeminiLLMProvider
 from app.ai.providers.ollama import OllamaLLMProvider
 from app.ai.providers.lmstudio import LMStudioLLMProvider
 
+from app.ai.config_manager import ai_config
+
 logger = logging.getLogger(__name__)
 
 def get_llm_provider() -> BaseLLMProvider:
     """
-    Selects and returns the configured clinical LLM provider based on environment variables.
+    Selects and returns the configured clinical LLM provider based on dynamic settings.
     """
-    provider_type = os.getenv("CLINICAL_LLM_PROVIDER", "mock").lower()
+    provider_type = ai_config.get("provider", "mock").lower()
 
     if provider_type == "openai":
         provider = OpenAILLMProvider()
@@ -34,7 +36,12 @@ def get_llm_provider() -> BaseLLMProvider:
         return provider
 
     elif provider_type == "ollama":
-        return OllamaLLMProvider()
+        provider = OllamaLLMProvider()
+        # Verify connection health; fallback if offline
+        if not provider.health_check():
+            logger.warning("Ollama provider is configured but connection failed. Defaulting to MockLLMProvider.")
+            return MockLLMProvider()
+        return provider
 
     elif provider_type == "lmstudio":
         return LMStudioLLMProvider()

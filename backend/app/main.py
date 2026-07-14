@@ -22,6 +22,10 @@ from app.api.auth import router as auth_router
 from app.api.rbac import router as rbac_router
 from app.api.user_management import router as user_management_router, dept_router as department_router
 from app.api.clinical_copilot import router as clinical_copilot_router
+from app.telemetry.routes import router as telemetry_router
+from app.api.hospital_assistant import router as hospital_assistant_router
+from app.api.rag import router as rag_router
+from app.api.ai import router as ai_router
 
 # =====================================================
 # WebSocket Routers
@@ -149,6 +153,26 @@ app.include_router(
 
 app.include_router(
     clinical_copilot_router,
+    prefix="/api",
+)
+
+app.include_router(
+    telemetry_router,
+    prefix="/api",
+)
+
+app.include_router(
+    hospital_assistant_router,
+    prefix="/api",
+)
+
+app.include_router(
+    rag_router,
+    prefix="/api",
+)
+
+app.include_router(
+    ai_router,
     prefix="/api",
 )
 
