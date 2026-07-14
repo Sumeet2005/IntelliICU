@@ -24,7 +24,7 @@ models/
 *.csv
 *.parquet
 ml/data/
-data/
+backend/datasets/
 
 # Vector DB
 backend/vector_db/
