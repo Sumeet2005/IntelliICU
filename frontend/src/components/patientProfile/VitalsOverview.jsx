@@ -8,6 +8,7 @@ import {
   Droplets,
   Loader2,
 } from "lucide-react";
+import { patientService } from "../../services/patientService";
 
 import {
   ResponsiveContainer,
@@ -20,13 +21,36 @@ import {
 } from "recharts";
 
 export default function VitalsOverview() {
-  const { selectedPatient, recommendation } = useClinicalAI();
+  const { selectedPatient, setSelectedPatient, patientsList, recommendation } = useClinicalAI();
   const patientId = selectedPatient?.patient?.id;
   const vitalsData = selectedPatient?.vitals || {};
   const risk = recommendation?.risk_progress;
 
   const [activeMetric, setActiveMetric] = useState("heartRate");
   const [history, setHistory] = useState([]);
+  const [loadingPatient, setLoadingPatient] = useState(false);
+
+  // Auto-select first patient if none is selected
+  useEffect(() => {
+    if (!selectedPatient && patientsList && patientsList.length > 0) {
+      loadPatientDetails(patientsList[0].id);
+    }
+  }, [selectedPatient, patientsList]);
+
+  async function loadPatientDetails(id) {
+    if (!id) return;
+    try {
+      setLoadingPatient(true);
+      const fullPatient = await patientService.getPatientById(id);
+      if (fullPatient) {
+        setSelectedPatient(fullPatient);
+      }
+    } catch (err) {
+      console.error("Failed to load patient details in VitalsOverview:", err);
+    } finally {
+      setLoadingPatient(false);
+    }
+  }
 
   // Reset history when active patient changes
   useEffect(() => {
@@ -129,6 +153,35 @@ export default function VitalsOverview() {
 
   return (
     <div className="space-y-6">
+      {/* Patient Selector Dropdown */}
+      <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+        <div>
+          <h2 className="text-sm font-bold text-slate-800">Physiological Telemetry Monitor</h2>
+          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+            {selectedPatient?.patient?.name ? `Currently monitoring ${selectedPatient.patient.name}` : "Please select a patient to start monitoring vitals"}
+          </p>
+        </div>
+        
+        {patientsList && patientsList.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-500">Select Patient:</span>
+            <select
+              value={patientId || ""}
+              onChange={(e) => loadPatientDetails(e.target.value)}
+              disabled={loadingPatient}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 outline-none focus:border-cyan-500 transition cursor-pointer"
+            >
+              {patientsList.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name || `${p.first_name} ${p.last_name}`} ({p.id})
+                </option>
+              ))}
+            </select>
+            {loadingPatient && <Loader2 className="animate-spin text-slate-400" size={14} />}
+          </div>
+        )}
+      </div>
+
       {/* Vital Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {vitals.map((item) => {
