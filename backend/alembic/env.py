@@ -5,8 +5,17 @@ from sqlalchemy import create_engine
 
 from app.core.config import settings
 from app.database.base import Base
+
+# Import all models
 from app.models import *
-from app.database.models import DBUser, DBRole, DBDepartment, DBPermission, DBAlert, DBTimelineEvent
+from app.database.models import (
+    DBUser,
+    DBRole,
+    DBDepartment,
+    DBPermission,
+    DBAlert,
+    DBTimelineEvent,
+)
 
 config = context.config
 
@@ -16,21 +25,25 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
-def run_migrations_offline() -> None:
+def run_migrations_offline():
     context.configure(
-        url=settings.DATABASE_URL,
+        url=settings.SQLALCHEMY_DATABASE_URI,
         target_metadata=target_metadata,
         literal_binds=True,
+        compare_type=True,
     )
 
     with context.begin_transaction():
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
-    connectable = create_engine(settings.DATABASE_URL)
+def run_migrations_online():
+    engine = create_engine(
+        settings.SQLALCHEMY_DATABASE_URI,
+        pool_pre_ping=True,
+    )
 
-    with connectable.connect() as connection:
+    with engine.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

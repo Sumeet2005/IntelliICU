@@ -5,4 +5,7 @@ alembic upgrade head
 
 # Start server
 echo "Starting Gunicorn server..."
-exec gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
+exec gunicorn app.main:app \
+    -w 1 \
+    -k uvicorn.workers.UvicornWorker \
+    -b 0.0.0.0:$PORT
