@@ -3,10 +3,14 @@ IntelliICU Main Application
 """
 
 import asyncio
+import os
 from contextlib import asynccontextmanager
+from datetime import datetime
+import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # =====================================================
 # REST API Routers
@@ -40,30 +44,57 @@ from app.websocket.patient_routes import router as patient_websocket_router
 
 from app.websocket.simulator import simulator
 
-
 # =====================================================
 # Application Lifespan
 # =====================================================
 
 from app.database.session import check_db_connectivity
 from app.database.seeder import seed_database_if_empty
+from app.database.base import Base
+from app.database.session import engine
+
+logger = logging.getLogger("app.main")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Application startup / shutdown.
+    Application startup / shutdown sequence.
+    Startup order: Configuration loaded -> DB validation -> Create tables -> Seed -> Init AI -> Simulator start -> Expose API.
     """
-
     print("=" * 60)
-    print("STARTING: IntelliICU Starting...")
+    print("STARTING: IntelliICU Initialization Sequence...")
     print("=" * 60)
 
-    # Validate database connection at boot
-    if check_db_connectivity():
+    # 1. Database connection & validation
+    db_ok = check_db_connectivity()
+    if db_ok:
+        # 2. Create tables
+        print("DATABASE: Creating schema tables...")
+        Base.metadata.create_all(bind=engine)
+
+        # 3. Seed database
+        print("DATABASE: Running seeders...")
         seed_database_if_empty()
+    else:
+        print("DATABASE: Connection failed. Booting in degraded/mock mode.")
 
-    # Start ICU Simulator
+    # 4. Initialize AI providers configurations
+    try:
+        from app.ai.factory import get_llm_provider
+        provider = get_llm_provider()
+        print(f"AI: Initialized provider: {provider.__class__.__name__}")
+    except Exception as e:
+        print(f"AI: Provider initialization warning: {e}")
+
+    # 5. Initialize & start simulator
+    print("SIMULATOR: Starting real-time telemetry simulator...")
     asyncio.create_task(simulator.start())
+
+    # 6. Expose API
+    app.state.startup_complete = True
+    print("=" * 60)
+    print("STARTUP COMPLETE: IntelliICU API is now accepting traffic.")
+    print("=" * 60)
 
     yield
 
@@ -81,19 +112,45 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan,
 )
+app.state.startup_complete = False
+
+# =====================================================
+# Startup Protection Middleware
+# =====================================================
+
+@app.middleware("http")
+async def startup_protection_middleware(request: Request, call_next):
+    # Allow health checks and bootstrap endpoints prior to startup completion
+    is_health_endpoint = request.url.path in ["/health", "/ready", "/live"]
+    is_bootstrap = request.url.path == "/api/auth/bootstrap"
+    
+    if is_health_endpoint or is_bootstrap:
+        return await call_next(request)
+
+    if not getattr(app.state, "startup_complete", False):
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Service Temporarily Unavailable: Startup initialization in progress."}
+        )
+    return await call_next(request)
+
 
 # =====================================================
 # CORS
 # =====================================================
 
+origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):517[0-9]$",
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # =====================================================
 # REST APIs
 # =====================================================
@@ -188,15 +245,8 @@ app.include_router(
 )
 
 # =====================================================
-# Root Endpoint
+# Root & Health Endpoints
 # =====================================================
-
-from datetime import datetime
-from fastapi import Request
-from fastapi.responses import JSONResponse
-import logging
-
-logger = logging.getLogger("app.main")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -214,10 +264,45 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.get("/live")
 async def health_check():
     db_ok = check_db_connectivity()
+    
+    # 1. Check AI Provider
+    ai_ok = False
+    ai_provider_name = "unknown"
+    try:
+        from app.ai.factory import get_llm_provider
+        provider = get_llm_provider()
+        if provider:
+            ai_ok = True
+            ai_provider_name = provider.__class__.__name__
+    except Exception:
+        pass
+
+    # 2. Check Simulator
+    sim_ok = False
+    try:
+        sim_ok = simulator is not None and len(simulator.patients) > 0
+    except Exception:
+        pass
+
+    # 3. Check Telemetry Engine
+    telemetry_ok = False
+    try:
+        from app.telemetry.trend_engine import telemetry_engine
+        telemetry_ok = telemetry_engine is not None
+    except Exception:
+        pass
+
+    overall_status = "healthy" if (db_ok and ai_ok and sim_ok and telemetry_ok) else "degraded"
+
     return {
-        "status": "healthy" if db_ok else "degraded",
+        "status": overall_status,
         "database": "connected" if db_ok else "disconnected",
-        "services": "online",
+        "ai_provider": {
+            "status": "online" if ai_ok else "offline",
+            "name": ai_provider_name
+        },
+        "simulator": "running" if sim_ok else "stopped",
+        "telemetry_engine": "online" if telemetry_ok else "offline",
         "timestamp": datetime.utcnow().isoformat()
     }
 
