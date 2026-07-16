@@ -1,55 +1,64 @@
+# ==========================
 # Python
+# ==========================
 .venv/
 __pycache__/
-*.pyc
+*.py[cod]
+*.log
 
+# ==========================
+# Environment
+# ==========================
+.env
+.env.*
+!.env.example
+
+# ==========================
 # Node
+# ==========================
 node_modules/
 frontend/node_modules/
-smart-icu-kaggle/frontend/node_modules/
 
-# Nested project
-smart-icu-kaggle/
+# ==========================
+# IDE
+# ==========================
+.vscode/
+.idea/
 
+# ==========================
+# Build
+# ==========================
+dist/
+build/
+
+# ==========================
 # ML Models
+# ==========================
 *.pkl
 *.joblib
 *.pt
 *.pth
 *.onnx
 backend/ml_models/
-models/
 
+# ==========================
 # Data
-*.csv
-*.parquet
-ml/data/
+# ==========================
+backend/data/
 backend/datasets/
-
-# Vector DB
-backend/vector_db/
-
-# Environment
-.env
-.env.*
-
-# IDE
-.vscode/
-.idea/
-
-# Logs
-*.log
-smart-icu-kaggle/
-.venv/
-node_modules/
-frontend/node_modules/
-smart-icu-kaggle/
 backend/vector_db/
 ml/
-models/
-backend/data/
 notebooks/
-*.pkl
-*.parquet
 *.csv
-.env
+*.parquet
+
+# ==========================
+# Nested / Old Projects
+# ==========================
+smart-icu-kaggle/
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
