@@ -16,6 +16,7 @@ import { escalationService } from "../services/escalationService";
 import { alertAnalyticsService } from "../services/alertAnalytics";
 import { timelineService } from "../services/timelineService";
 import { eventEngine } from "../services/eventEngine";
+import { useAuth } from "./AuthContext";
 
 const ClinicalAIContext = createContext();
 
@@ -71,6 +72,7 @@ function hasPayloadChanged(p1, p2) {
 }
 
 export function ClinicalAIProvider({ children }) {
+  const { user } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [recommendation, setRecommendation] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -103,6 +105,8 @@ export function ClinicalAIProvider({ children }) {
 
   // Subscribe to dashboard updates for live patient list
   useEffect(() => {
+    if (!user) return;
+
     const dashboardUrl = `${config.WS_BASE_URL}/dashboard`;
     websocketService.connect("dashboard", dashboardUrl);
 
@@ -121,7 +125,7 @@ export function ClinicalAIProvider({ children }) {
       websocketService.off("dashboard", "message", handleMessage);
       websocketService.disconnect("dashboard");
     };
-  }, []);
+  }, [user]);
 
   // Real-time evaluation of patient alerts with state history and auto-resolve
   useEffect(() => {
@@ -378,7 +382,7 @@ export function ClinicalAIProvider({ children }) {
   };
 
   useEffect(() => {
-    if (!patientId) {
+    if (!user || !patientId) {
       setConnected(false);
       return;
     }
@@ -479,7 +483,7 @@ export function ClinicalAIProvider({ children }) {
       websocketService.off(channel, "patient_update", handlePatientUpdate);
       websocketService.disconnect(channel);
     };
-  }, [patientId, channel]);
+  }, [user, patientId, channel]);
 
   async function analyzePatient(payload) {
     try {
