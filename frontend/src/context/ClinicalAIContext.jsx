@@ -17,6 +17,10 @@ import { alertAnalyticsService } from "../services/alertAnalytics";
 import { timelineService } from "../services/timelineService";
 import { eventEngine } from "../services/eventEngine";
 import { useAuth } from "./AuthContext";
+import { usePatient } from "./PatientContext";
+import { useAlert } from "./AlertContext";
+import { useDashboard } from "./DashboardContext";
+import { useTimeline } from "./TimelineContext";
 
 const ClinicalAIContext = createContext();
 
@@ -73,16 +77,39 @@ function hasPayloadChanged(p1, p2) {
 
 export function ClinicalAIProvider({ children }) {
   const { user } = useAuth();
-  const [selectedPatient, setSelectedPatient] = useState(null);
   const [recommendation, setRecommendation] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [patientsList, setPatientsList] = useState([]);
-  const [connected, setConnected] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [alerts, setAlerts] = useState([]);
   const [auditTrail, setAuditTrail] = useState([]);
-  const [timelineEvents, setTimelineEvents] = useState([]);
+  
+  const {
+    selectedPatient,
+    setSelectedPatient,
+    patientsList,
+    setPatientsList,
+  } = usePatient();
+  const {
+     alerts,
+     setAlerts,
+     alertCount,
+     criticalAlerts,
+     addAlert,
+     removeAlert,
+     clearAlerts,
+    } = useAlert();
+    const {
+      connected,
+      updateConnection,
+      lastUpdated,
+      updateLastUpdated,
+      loading,
+      setLoading,
+    } = useDashboard();
+    const {
+      timelineEvents,
+      setTimelineEvents,
+      addTimelineEvent,
+      clearTimeline,
+    } = useTimeline();
 
   const loadTimeline = async (patientId) => {
     try {
@@ -109,10 +136,6 @@ export function ClinicalAIProvider({ children }) {
 
     const dashboardUrl = `${config.WS_BASE_URL}/dashboard`;
     websocketService.connect("dashboard", dashboardUrl);
-
-    patientService.getPatients().then(data => {
-      setPatientsList(data || []);
-    }).catch(err => console.error("Failed to load initial patients:", err));
 
     const handleMessage = (message) => {
       if (message?.type === "patients_update") {
@@ -153,12 +176,6 @@ export function ClinicalAIProvider({ children }) {
             by: "System",
           }];
 
-          addAuditEvent(
-            alert.id,
-            "Auto-Resolved",
-            `System resolved alert: ${alert.message} for ${alert.patient_name}`,
-            alert.resolvedAt
-          );
         }
       });
 
@@ -216,7 +233,6 @@ export function ClinicalAIProvider({ children }) {
   }, []);
 
   const activeAlerts = useMemo(() => alerts.filter(a => a.status === "ACTIVE" || a.status === "ACKNOWLEDGED"), [alerts]);
-  const alertCount = useMemo(() => activeAlerts.length, [activeAlerts]);
   const criticalCount = useMemo(() => activeAlerts.filter(a => a.severity === "CRITICAL" && a.status === "ACTIVE").length, [activeAlerts]);
   const escalatedAlerts = useMemo(() => alerts.filter(a => a.escalationLevel && a.status !== "RESOLVED"), [alerts]);
 
@@ -383,18 +399,18 @@ export function ClinicalAIProvider({ children }) {
 
   useEffect(() => {
     if (!user || !patientId) {
-      setConnected(false);
+      updateConnection(false);
       return;
     }
 
     const wsUrl = `${config.WS_BASE_URL}/patient/${patientId}`;
 
     const handleConnected = () => {
-      setConnected(true);
+      updateConnection(true);
     };
 
     const handleDisconnected = () => {
-      setConnected(false);
+      updateConnection(false);
     };
 
     const handlePatientUpdate = (message) => {
@@ -408,7 +424,7 @@ export function ClinicalAIProvider({ children }) {
 
       if (!message?.data) return;
 
-      setLastUpdated(message.timestamp ?? new Date().toLocaleTimeString());
+      updateLastUpdated(message.timestamp ?? new Date().toLocaleTimeString());
 
       setSelectedPatient(prev => {
         if (!prev || prev.patient?.id !== message.data.id) return prev;
@@ -469,7 +485,7 @@ export function ClinicalAIProvider({ children }) {
       });
     };
 
-    setConnected(websocketService.isConnected(channel));
+    updateConnection(websocketService.isConnected(channel));
 
     websocketService.on(channel, "connected", handleConnected);
     websocketService.on(channel, "disconnected", handleDisconnected);
@@ -582,7 +598,6 @@ export function ClinicalAIProvider({ children }) {
       activeAlerts,
       alertCount,
       criticalCount,
-      alerts,
       auditTrail,
       escalatedAlerts,
       alertAnalytics,

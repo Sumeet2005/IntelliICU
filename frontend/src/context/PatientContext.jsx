@@ -1,53 +1,72 @@
 import {
-    createContext,
-    useContext,
-    useMemo,
-    useState,
-    useCallback,
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useCallback,
 } from "react";
+
+import { patientService } from "../services/patientService";
 
 const PatientContext = createContext(null);
 
 export function PatientProvider({ children }) {
+  const [patientsList, setPatientsList] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [loadingPatients, setLoadingPatients] = useState(false);
 
-    const [patientsList, setPatientsList] = useState([]);
+  const loadPatients = useCallback(async () => {
+    try {
+      setLoadingPatients(true);
 
-    const [selectedPatient, setSelectedPatient] = useState(null);
+      const data = await patientService.getPatients();
 
-    const clearSelectedPatient = useCallback(() => {
-        setSelectedPatient(null);
-    }, []);
+      setPatientsList(data || []);
+    } catch (err) {
+      console.error("Failed to load patients:", err);
+    } finally {
+      setLoadingPatients(false);
+    }
+  }, []);
 
-    const value = useMemo(() => ({
-        patientsList,
-        setPatientsList,
+  const clearSelectedPatient = useCallback(() => {
+    setSelectedPatient(null);
+  }, []);
 
-        selectedPatient,
-        setSelectedPatient,
+  const value = useMemo(
+    () => ({
+      patientsList,
+      selectedPatient,
+      loadingPatients,
 
-        clearSelectedPatient,
-    }), [
-        patientsList,
-        selectedPatient,
-        clearSelectedPatient,
-    ]);
+      setPatientsList,
+      setSelectedPatient,
 
-    return (
-        <PatientContext.Provider value={value}>
-            {children}
-        </PatientContext.Provider>
-    );
+      loadPatients,
+      clearSelectedPatient,
+    }),
+    [
+      patientsList,
+      selectedPatient,
+      loadingPatients,
+      loadPatients,
+      clearSelectedPatient,
+    ]
+  );
+
+  return (
+    <PatientContext.Provider value={value}>
+      {children}
+    </PatientContext.Provider>
+  );
 }
 
 export function usePatient() {
+  const context = useContext(PatientContext);
 
-    const context = useContext(PatientContext);
+  if (!context) {
+    throw new Error("usePatient must be used inside PatientProvider.");
+  }
 
-    if (!context) {
-        throw new Error(
-            "usePatient must be used inside PatientProvider."
-        );
-    }
-
-    return context;
+  return context;
 }
