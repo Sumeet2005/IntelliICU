@@ -89,11 +89,12 @@ jobs:
       # --------------------------------------------------------
 
       - name: Install Linux Native Build Dependencies
-        working-directory: frontend
-        run: |
-          npm install --no-save \
-            @rolldown/binding-linux-x64-gnu \
-            lightningcss-linux-x64-gnu
+  working-directory: frontend
+  run: |
+    npm install --no-save \
+      @rolldown/binding-linux-x64-gnu \
+      lightningcss-linux-x64-gnu \
+      @tailwindcss/oxide-linux-x64-gnu
 
       - name: Run Vite Production Build
         working-directory: frontend
