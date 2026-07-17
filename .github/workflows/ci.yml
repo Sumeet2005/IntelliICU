@@ -2,51 +2,100 @@ name: IntelliICU CI Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
+
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
 
 jobs:
+
+  # ============================================================
+  # Backend CI
+  # ============================================================
+
   backend-test:
+    name: Backend Test
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.13'
-        cache: 'pip'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r backend/requirements.txt
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
 
-    - name: Run Python Compile Check
-      run: |
-        python -m py_compile backend/app/main.py
+      - name: Install Backend Dependencies
+        run: |
+          pip install -r backend/requirements.txt
+
+      - name: Run Python Compile Check
+        run: |
+          python -m py_compile backend/app/main.py
+
+
+  # ============================================================
+  # Frontend CI
+  # ============================================================
 
   frontend-build:
+    name: Frontend Build
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-    - name: Install Dependencies
-      run: |
-       cd frontend
-       npm install
+      # --------------------------------------------------------
+      # Install dependencies directly inside Linux.
+      #
+      # package-lock.json may have been generated on Windows and
+      # can omit Linux-specific optional native dependencies used
+      # by Rolldown and LightningCSS.
+      # --------------------------------------------------------
 
-    - name: Run Vite Build Check
-      run: |
-        cd frontend
-        npm run build
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: |
+          rm -rf node_modules
+          npm install --include=optional --no-audit --no-fund
+
+      # --------------------------------------------------------
+      # Explicit Linux native dependencies.
+      #
+      # This prevents CI failures such as:
+      #
+      # Cannot find module:
+      # @rolldown/binding-linux-x64-gnu
+      #
+      # Cannot find module:
+      # lightningcss.linux-x64-gnu.node
+      # --------------------------------------------------------
+
+      - name: Install Linux Native Build Dependencies
+        working-directory: frontend
+        run: |
+          npm install --no-save \
+            @rolldown/binding-linux-x64-gnu \
+            lightningcss-linux-x64-gnu
+
+      - name: Run Vite Production Build
+        working-directory: frontend
+        run: |
+          npm run build
