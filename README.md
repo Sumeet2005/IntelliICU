@@ -8,10 +8,6 @@
   An enterprise-grade healthcare AI platform designed to support clinicians with intelligent patient monitoring, real-time telemetry, AI-assisted clinical decision support, and hospital management capabilities.
 </p>
 
----
-
----
-
 ## 🚀 Live Deployment
 
 The IntelliICU platform is deployed on Railway with separate frontend and backend services.
@@ -29,6 +25,9 @@ The IntelliICU platform is deployed on Railway with separate frontend and backen
 [**FastAPI Swagger Documentation**](https://intelliicu-production.up.railway.app/docs)
 
 ### Deployment Architecture
+---
+
+---
 
 ```text
 User / Browser
