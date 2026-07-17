@@ -3,27 +3,18 @@
  *
  * Custom React hook for consuming telemetry trend data from the EXISTING
  * patient WebSocket channel.
- *
- * The simulator embeds `telemetry_trends` in every `patient_update` message.
- * This hook extracts that payload and maintains a per-patient trend state map.
- *
- * NO additional WebSocket connection.  NO polling.
- * Subscribes to the existing `ws/dashboard` channel which already carries
- * `patients_update` messages including all patient telemetry data.
- *
- * Usage:
- *   const { allTrends, getPatientTrend, connected } = useTelemetry();
- *   const trend = getPatientTrend("ICU-10248");
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import websocketService from "../../services/websocketService";
 import config from "../../config";
+import { useAuth } from "../../context/AuthContext";
 
 const CHANNEL = "dashboard";
 const WS_URL  = `${config.WS_BASE_URL}/dashboard`;
 
 export default function useTelemetry() {
+  const { user } = useAuth();
   // Map of patient_id -> telemetry_trends payload
   const [allTrends, setAllTrends] = useState({});
   const [connected, setConnected]   = useState(false);
@@ -35,9 +26,6 @@ export default function useTelemetry() {
   const handleMessage = useCallback((msg) => {
     if (!msg || !msg.type) return;
 
-    // The simulator broadcasts `patients_update` on the dashboard channel.
-    // Each patient in the data array may carry a `telemetry_trends` key that
-    // was populated by the trend engine.
     if (msg.type === "patients_update" && Array.isArray(msg.data)) {
       let changed = false;
       const next = { ...allTrendsRef.current };
@@ -65,8 +53,12 @@ export default function useTelemetry() {
   const handleDisconnected = useCallback(() => setConnected(false), []);
 
   useEffect(() => {
+    if (!user) {
+      setConnected(false);
+      return;
+    }
+
     // Connect using the shared singleton service.
-    // If the dashboard channel is already open this is a no-op.
     websocketService.connect(CHANNEL, WS_URL);
 
     websocketService.on(CHANNEL, "connected",    handleConnected);
@@ -80,9 +72,8 @@ export default function useTelemetry() {
       websocketService.off(CHANNEL, "connected",    handleConnected);
       websocketService.off(CHANNEL, "disconnected", handleDisconnected);
       websocketService.off(CHANNEL, "message",      handleMessage);
-      // Do NOT call disconnect — the channel is shared with the dashboard.
     };
-  }, [handleConnected, handleDisconnected, handleMessage]);
+  }, [user, handleConnected, handleDisconnected, handleMessage]);
 
   const getPatientTrend = useCallback(
     (patientId) => allTrendsRef.current[patientId] || null,

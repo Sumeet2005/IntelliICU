@@ -1,8 +1,8 @@
 class WebSocketService {
   constructor() {
     this.channels = new Map();
-    this.maxReconnectAttempts = 10;
-    this.baseReconnectDelay = 2000; // 2s base, grows with backoff
+    this.maxReconnectAttempts = 5;
+    this.reconnectSchedule = [2000, 5000, 10000, 20000, 30000]; // 2s, 5s, 10s, 20s, 30s
   }
 
   _initChannelState(url) {
@@ -87,7 +87,6 @@ class WebSocketService {
 
     if (state.reconnectAttempts >= this.maxReconnectAttempts) {
       console.warn(`WebSocket ${channel}: max reconnect attempts reached. Will retry in 30s.`);
-      // Don't permanently give up — schedule one final long-delay retry
       state.reconnectTimer = setTimeout(() => {
         state.reconnectAttempts = 0; // reset counter for fresh round
         this.connect(channel, state.url);
@@ -95,17 +94,12 @@ class WebSocketService {
       return;
     }
 
+    const delay = this.reconnectSchedule[state.reconnectAttempts] || 30000;
     state.reconnectAttempts++;
 
     if (state.reconnectTimer) {
       clearTimeout(state.reconnectTimer);
     }
-
-    // Exponential backoff: 2s, 4s, 8s ... capped at 15s
-    const delay = Math.min(
-      this.baseReconnectDelay * Math.pow(1.5, state.reconnectAttempts - 1),
-      15000
-    );
 
     console.log(`🔄 WebSocket ${channel}: reconnect attempt ${state.reconnectAttempts} in ${Math.round(delay / 1000)}s`);
 

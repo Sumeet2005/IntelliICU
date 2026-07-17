@@ -1,36 +1,29 @@
-const API_URL = "http://127.0.0.1:8000/api/alerts";
+import api from "../api/axios";
 
 export const alertService = {
-  async acknowledge(alertId) {
-    const response = await fetch(
-      `${API_URL}/acknowledge/${alertId}`,
-      {
-        method: "POST",
-      }
-    );
-
-    return response.json();
+  getAlerts: async () => {
+    const response = await api.get("/alerts/");
+    return response.data;
   },
 
-  async resolve(alertId) {
-    const response = await fetch(
-      `${API_URL}/resolve/${alertId}`,
-      {
-        method: "POST",
-      }
+  acknowledge: async (alertId) => {
+    const response = await api.post(
+      `/alerts/acknowledge/${alertId}`
     );
-
-    return response.json();
+    return response.data;
   },
 
-  async escalate(alertId) {
-    const response = await fetch(
-      `${API_URL}/escalate/${alertId}`,
-      {
-        method: "POST",
-      }
+  resolve: async (alertId) => {
+    const response = await api.post(
+      `/alerts/resolve/${alertId}`
     );
+    return response.data;
+  },
 
-    return response.json();
+  escalate: async (alertId) => {
+    const response = await api.post(
+      `/alerts/escalate/${alertId}`
+    );
+    return response.data;
   },
 };

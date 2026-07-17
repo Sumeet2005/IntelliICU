@@ -1,21 +1,28 @@
-const getApiUrl = () => {
-  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "127.0.0.1";
-  return `http://${hostname}:8000/api`;
-};
+const hostname =
+  typeof window !== "undefined"
+    ? window.location.hostname
+    : "localhost";
 
-const getWsUrl = () => {
-  if (import.meta.env.VITE_WS_BASE_URL) return import.meta.env.VITE_WS_BASE_URL;
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "127.0.0.1";
-  return `ws://${hostname}:8000/ws`;
-};
+const protocol =
+  typeof window !== "undefined"
+    ? window.location.protocol
+    : "http:";
+
+const wsProtocol =
+  protocol === "https:" ? "wss:" : "ws:";
 
 const config = {
-  API_BASE_URL: getApiUrl(),
-  WS_BASE_URL: getWsUrl(),
+  API_BASE_URL:
+    import.meta.env.VITE_API_BASE_URL ||
+    `${protocol}//${hostname}:8000/api`,
+
+  WS_BASE_URL:
+    import.meta.env.VITE_WS_BASE_URL ||
+    `${wsProtocol}//${hostname}:8000/ws`,
+
   ESCALATION_L2_SECONDS: 15,
+
   ESCALATION_L3_SECONDS: 30,
 };
 
 export default config;
-
