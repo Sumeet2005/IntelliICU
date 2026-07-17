@@ -10,24 +10,38 @@ FROM node:20-bookworm-slim AS build
 
 WORKDIR /app
 
+# -----------------------------------------------------
+# Vite Production Build Variables
+# -----------------------------------------------------
+# Railway provides these variables during the Docker
+# build. Vite requires VITE_* variables to be available
+# when `npm run build` executes.
+# -----------------------------------------------------
+
+ARG VITE_API_BASE_URL
+ARG VITE_WS_BASE_URL
+
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_WS_BASE_URL=${VITE_WS_BASE_URL}
+
 # Copy package manifest first.
-# package-lock.json is intentionally not used for the Docker
-# dependency installation because it may have been generated
-# on Windows and omit Linux-specific optional native packages.
 COPY package.json ./
 
-# Install dependencies directly inside the Linux environment.
-# This allows npm to resolve all required Linux-native optional
-# dependencies for Vite, Rolldown, LightningCSS, etc.
+# Install dependencies inside Linux environment.
+# This avoids Windows-generated lockfile issues with
+# Linux native optional packages used by Rolldown,
+# LightningCSS, etc.
 RUN npm install \
     --include=optional \
     --no-audit \
     --no-fund
 
-# Copy the complete frontend application.
+# Copy complete frontend application.
 COPY . .
 
 # Build production Vite application.
+# VITE_API_BASE_URL and VITE_WS_BASE_URL are embedded
+# into the generated frontend bundle here.
 RUN npm run build
 
 
@@ -44,11 +58,6 @@ RUN rm -rf /usr/share/nginx/html/*
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Create SPA-compatible Nginx configuration.
-# This ensures React Router routes such as:
-# /dashboard
-# /patients/ICU-10264
-# /telemetry
-# work correctly when opened/refreshed directly.
 RUN printf 'server {\n\
     listen 80;\n\
     server_name _;\n\
