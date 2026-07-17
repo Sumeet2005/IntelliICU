@@ -12,11 +12,9 @@ on:
       - master
 
 jobs:
-
   # ============================================================
   # Backend CI
   # ============================================================
-
   backend-test:
     name: Backend Test
     runs-on: ubuntu-latest
@@ -33,22 +31,17 @@ jobs:
           cache-dependency-path: backend/requirements.txt
 
       - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
+        run: python -m pip install --upgrade pip
 
       - name: Install Backend Dependencies
-        run: |
-          pip install -r backend/requirements.txt
+        run: pip install -r backend/requirements.txt
 
       - name: Run Python Compile Check
-        run: |
-          python -m py_compile backend/app/main.py
-
+        run: python -m py_compile backend/app/main.py
 
   # ============================================================
   # Frontend CI
   # ============================================================
-
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest
@@ -62,41 +55,17 @@ jobs:
         with:
           node-version: "20"
 
-      # --------------------------------------------------------
-      # Install dependencies directly inside Linux.
-      #
-      # package-lock.json may have been generated on Windows and
-      # can omit Linux-specific optional native dependencies used
-      # by Rolldown and LightningCSS.
-      # --------------------------------------------------------
-
       - name: Install Frontend Dependencies
         working-directory: frontend
         run: |
           rm -rf node_modules
           npm install --include=optional --no-audit --no-fund
 
-      # --------------------------------------------------------
-      # Explicit Linux native dependencies.
-      #
-      # This prevents CI failures such as:
-      #
-      # Cannot find module:
-      # @rolldown/binding-linux-x64-gnu
-      #
-      # Cannot find module:
-      # lightningcss.linux-x64-gnu.node
-      # --------------------------------------------------------
-
       - name: Install Linux Native Build Dependencies
-  working-directory: frontend
-  run: |
-    npm install --no-save \
-      @rolldown/binding-linux-x64-gnu \
-      lightningcss-linux-x64-gnu \
-      @tailwindcss/oxide-linux-x64-gnu
+        working-directory: frontend
+        run: |
+          npm install --no-save @rolldown/binding-linux-x64-gnu lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu
 
       - name: Run Vite Production Build
         working-directory: frontend
-        run: |
-          npm run build
+        run: npm run build
