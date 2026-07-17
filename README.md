@@ -10,6 +10,42 @@
 
 ---
 
+---
+
+## 🚀 Live Deployment
+
+The IntelliICU platform is deployed on Railway with separate frontend and backend services.
+
+### 🌐 Live Application
+
+[**Open IntelliICU Live Demo**](https://intelliicu-frontend-production.up.railway.app)
+
+### ⚙️ Backend API
+
+[**IntelliICU Backend API**](https://intelliicu-production.up.railway.app)
+
+### 📚 API Documentation
+
+[**FastAPI Swagger Documentation**](https://intelliicu-production.up.railway.app/docs)
+
+### Deployment Architecture
+
+```text
+User / Browser
+      │
+      ▼
+React + Vite Frontend
+Nginx • Railway
+      │
+      │ HTTPS REST API
+      │ Secure WebSocket
+      ▼
+FastAPI Backend
+Railway
+      │
+      ▼
+PostgreSQL Database
+
 ## 📌 Overview
 
 **IntelliICU** is an Enterprise AI Clinical Decision Support System (CDSS) designed to demonstrate how Artificial Intelligence, Machine Learning, real-time patient monitoring, and modern full-stack technologies can be integrated into a unified healthcare platform.
