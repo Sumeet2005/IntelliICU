@@ -13,7 +13,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const redirectPath = location.state?.from?.pathname || "/";
+  const redirectPath = location.state?.from?.pathname || "/dashboard";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,7 +38,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
+    <div className="flex min-h-screen w-full bg-[#0a0e1a] text-slate-100 font-sans overflow-x-hidden relative">
       {/* Background ambient glowing nodes */}
       <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-cyan-900/10 blur-[150px]" />
       <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-indigo-900/15 blur-[150px]" />

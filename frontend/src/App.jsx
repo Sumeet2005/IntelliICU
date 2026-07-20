@@ -18,6 +18,7 @@ const UserProfile = lazy(() => import("./pages/UserProfile"));
 const Telemetry = lazy(() => import("./pages/Telemetry"));
 const HospitalAssistant = lazy(() => import("./pages/HospitalAssistant"));
 const Unauthorized = lazy(() => import("./pages/Unauthorized"));
+const Landing = lazy(() => import("./pages/Landing"));
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
       }
     >
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
 
         <Route
@@ -44,7 +46,6 @@ export default function App() {
             </AuthGuard>
           }
         >
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
           <Route
             path="/dashboard"
