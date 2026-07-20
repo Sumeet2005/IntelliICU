@@ -18,10 +18,6 @@ The IntelliICU platform is deployed on Railway with separate frontend and backen
 
 [**Open IntelliICU Live Demo**](https://intelliicu-frontend-production.up.railway.app)
 
-### 📚 API Documentation
-
-[**FastAPI Swagger Documentation**](https://intelliicu-production.up.railway.app/docs)
-
 ### 🏗️ Deployment Architecture
 
 ```text
