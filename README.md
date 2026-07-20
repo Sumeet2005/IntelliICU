@@ -10,6 +10,39 @@
 
 ---
 
+## 🚀 Live Deployment
+
+The IntelliICU platform is deployed on Railway with separate frontend and backend services.
+
+### 🌐 Live Application
+
+[**Open IntelliICU Live Demo**](https://intelliicu-frontend-production.up.railway.app)
+
+### 📚 API Documentation
+
+[**FastAPI Swagger Documentation**](https://intelliicu-production.up.railway.app/docs)
+
+### 🏗️ Deployment Architecture
+
+```text
+User / Browser
+      │
+      ▼
+React + Vite Frontend
+Nginx • Railway
+      │
+      │ HTTPS REST API
+      │ Secure WebSocket
+      ▼
+FastAPI Backend
+Railway
+      │
+      ▼
+PostgreSQL Database
+```
+
+---
+
 ## 📌 Overview
 
 **IntelliICU** is an Enterprise AI Clinical Decision Support System (CDSS) designed to demonstrate how Artificial Intelligence, Machine Learning, real-time patient monitoring, and modern full-stack technologies can be integrated into a unified healthcare platform.
@@ -131,7 +164,7 @@ Designed to support monitoring of information such as:
 - Temperature
 - Other clinical telemetry signals
 
-The telemetry interface helps demonstrate how real-time patient information can be integrated into an AI-powered clinical platform.
+The telemetry interface demonstrates how real-time patient information can be integrated into an AI-powered clinical platform.
 
 ---
 
@@ -246,7 +279,7 @@ IntelliICU follows a modular full-stack architecture designed for scalability, m
              ▼                     ▼                     ▼
     ┌────────────────┐    ┌────────────────┐    ┌────────────────┐
     │ Authentication │    │ Clinical / AI  │    │ Hospital APIs  │
-    │     & RBAC     │    │    Services    │    │ & Management   │
+    │     & RBAC      │    │    Services    │    │ & Management   │
     └───────┬────────┘    └───────┬────────┘    └───────┬────────┘
             │                     │                     │
             └─────────────────────┼─────────────────────┘
@@ -255,7 +288,8 @@ IntelliICU follows a modular full-stack architecture designed for scalability, m
                        ┌─────────────────────┐
                        │   Database Layer    │
                        │                     │
-                       │ SQLAlchemy / DB     │
+                       │ SQLAlchemy /        │
+                       │ PostgreSQL          │
                        └─────────────────────┘
 ```
 
@@ -267,10 +301,9 @@ IntelliICU follows a modular full-stack architecture designed for scalability, m
 INTELLIICU/
 │
 ├── .github/
-│   └── GitHub workflows and configuration
-│
-├── .venv/
-│   └── Python virtual environment
+│   ├── ISSUE_TEMPLATE/
+│   ├── workflows/
+│   └── pull_request_template.md
 │
 ├── assets/
 │   └── Project assets and static resources
@@ -288,13 +321,10 @@ INTELLIICU/
 │   └── Project documentation
 │
 ├── frontend/
-│   └── Frontend application
+│   └── React + Vite frontend application
 │
 ├── infra/
 │   └── Infrastructure configuration
-│
-├── node_modules/
-│   └── Node.js dependencies
 │
 ├── screenshots/
 │   ├── admin-dashboard.png
@@ -310,7 +340,7 @@ INTELLIICU/
 │   └── Development and deployment scripts
 │
 ├── src/
-│   └── Application source code
+│   └── Supporting source code
 │
 ├── tests/
 │   └── Automated tests
@@ -320,11 +350,10 @@ INTELLIICU/
 ├── CONTRIBUTING.md
 ├── docker-compose.yml
 ├── LICENSE
-├── package-lock.json
-├── package.json
-├── qc
 └── README.md
 ```
+
+> Local development directories such as `.venv/`, `node_modules/`, and generated build artifacts are excluded from version control and are not part of the repository structure.
 
 ---
 
@@ -333,10 +362,13 @@ INTELLIICU/
 ## Frontend
 
 - React
+- Vite
 - JavaScript
 - Modern Component-Based UI
 - REST API Integration
+- WebSocket Integration
 - Responsive Dashboard Design
+- Nginx Production Server
 
 ## Backend
 
@@ -359,7 +391,10 @@ INTELLIICU/
 - Pandas
 - NumPy
 - Machine Learning Models
+- Retrieval-Augmented Generation (RAG)
 - AI Clinical Decision Support
+- Clinical Copilot
+- LLM Provider Architecture
 
 ## Security
 
@@ -367,6 +402,15 @@ INTELLIICU/
 - Password Hashing
 - Role-Based Access Control (RBAC)
 - Protected API Routes
+- CORS Configuration
+- Environment-Based Secrets
+
+## Real-Time Communication
+
+- WebSockets
+- Live ICU Telemetry
+- Real-Time Dashboard Updates
+- Patient Monitoring Streams
 
 ## DevOps & Infrastructure
 
@@ -374,6 +418,9 @@ INTELLIICU/
 - Docker Compose
 - GitHub
 - GitHub Actions
+- Railway
+- Nginx
+- CI/CD Pipeline
 - Cloud Deployment Architecture
 
 ---
@@ -385,7 +432,7 @@ INTELLIICU/
 Before running IntelliICU locally, make sure you have installed:
 
 - Python 3.10+
-- Node.js
+- Node.js 20+
 - npm
 - Git
 - Docker (optional)
@@ -396,11 +443,9 @@ Before running IntelliICU locally, make sure you have installed:
 # 📥 Clone the Repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/Sumeet2005/IntelliICU.git
 cd IntelliICU
 ```
-
-Replace `<your-repository-url>` with the URL of your GitHub repository.
 
 ---
 
@@ -420,7 +465,7 @@ Copy-Item .env.example .env
 
 Configure the required environment variables inside `.env`.
 
-> Never commit your actual `.env` file or production credentials to GitHub.
+> Never commit your actual `.env` file, production credentials, database passwords, JWT secrets, or API keys to GitHub.
 
 ---
 
@@ -442,8 +487,8 @@ Activate the virtual environment.
 
 ### Windows
 
-```bash
-.venv\Scripts\activate
+```powershell
+.venv\Scripts\Activate.ps1
 ```
 
 ### Linux / macOS
@@ -510,11 +555,17 @@ The frontend will typically be available at:
 http://localhost:5173
 ```
 
+To create a production build:
+
+```bash
+npm run build
+```
+
 ---
 
 # 🐳 Docker Setup
 
-If the project is configured with Docker Compose, the application can be started using:
+The application can be started using Docker Compose:
 
 ```bash
 docker compose up --build
@@ -536,18 +587,7 @@ docker compose up --build --force-recreate
 
 # 🔐 Environment Variables
 
-The project uses environment variables for configuration.
-
-Example:
-
-```env
-DATABASE_URL=your_database_url
-SECRET_KEY=your_secret_key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
-
-Additional environment variables may be required depending on enabled services and AI integrations.
+The project uses environment variables for application configuration, database connectivity, authentication, AI providers, and deployment settings.
 
 Refer to:
 
@@ -555,7 +595,21 @@ Refer to:
 .env.example
 ```
 
-for the complete list of required configuration variables.
+for the available environment configuration template.
+
+Important configuration categories include:
+
+- Project metadata
+- PostgreSQL database configuration
+- JWT authentication settings
+- Clinical LLM provider configuration
+- OpenAI configuration
+- Google Gemini configuration
+- Ollama configuration
+- LM Studio configuration
+- Deployment settings
+
+> Production secrets should be configured directly through the deployment platform and must never be committed to source control.
 
 ---
 
@@ -583,6 +637,8 @@ The documentation allows developers to:
 - Review authentication requirements
 - Understand API models
 
+For the deployed application, use the live Swagger documentation linked at the top of this README.
+
 ---
 
 # 🧩 Core Platform Modules
@@ -598,6 +654,53 @@ The documentation allows developers to:
 | 📈 Telemetry Monitor | Patient physiological telemetry visualization |
 | 👥 User Management | User and role administration |
 | 🔒 RBAC | Role-Based Access Control |
+| 🔌 REST API | Frontend-backend application communication |
+| ⚡ WebSockets | Real-time telemetry and dashboard communication |
+| 🗄️ PostgreSQL | Persistent relational data storage |
+
+---
+
+# 🔄 CI/CD
+
+IntelliICU uses GitHub Actions for continuous integration.
+
+The CI pipeline validates important parts of the application, including:
+
+- Backend dependency installation
+- Python application compile checks
+- Frontend dependency installation
+- Vite production build validation
+
+This helps identify integration and build problems before changes are deployed.
+
+---
+
+# ☁️ Production Deployment
+
+The production architecture separates the application into independent services.
+
+```text
+Internet
+   │
+   ├──► React + Vite Frontend
+   │       │
+   │       └── Nginx
+   │            │
+   │            ▼
+   │         Railway
+   │
+   └──► FastAPI Backend
+           │
+           ▼
+        Railway
+           │
+           ▼
+       PostgreSQL
+```
+
+The frontend communicates with the backend through HTTPS REST APIs and secure WebSocket connections.
+
+Production environment variables are managed through the deployment platform.
 
 ---
 
@@ -650,7 +753,7 @@ Planned future improvements include:
 - Wearable Device Integration
 - Advanced Role-Based Access Control
 - Kubernetes Deployment
-- CI/CD Pipeline
+- Advanced CI/CD
 - Cloud-Native Infrastructure
 - Observability and Monitoring
 
@@ -670,9 +773,11 @@ The primary goals of IntelliICU are to demonstrate practical experience in:
 - Authentication and Authorization
 - Role-Based Access Control
 - Real-Time Monitoring Systems
+- WebSocket Communication
 - Database Architecture
 - Docker Containerization
 - Cloud Deployment
+- CI/CD
 - Scalable System Design
 - Production-Oriented Software Development
 
@@ -713,7 +818,7 @@ General contribution workflow:
 ```bash
 git checkout -b feature/your-feature-name
 git add .
-git commit -m "Add new feature"
+git commit -m "feat: add your feature"
 git push origin feature/your-feature-name
 ```
 
@@ -736,7 +841,7 @@ When contributing to or deploying IntelliICU:
 - Validate all incoming data.
 - Follow the principle of least privilege.
 
-For production healthcare use, additional regulatory, security, privacy, compliance, and clinical validation requirements would be necessary.
+For production healthcare use, additional regulatory, security, privacy, compliance, validation, and clinical governance requirements would be necessary.
 
 ---
 
