@@ -26,7 +26,12 @@ class LazyModelProxy:
                 if self._model is None:
                     logger.info("Loading IntelliICU production ML model (809MB)...")
                     import joblib
-                    self._model = joblib.load(self._path)
+                    import gc
+                    loaded = joblib.load(self._path, mmap_mode="r")
+                    if hasattr(loaded, "n_jobs"):
+                        loaded.n_jobs = 1
+                    self._model = loaded
+                    gc.collect()
                     logger.info("IntelliICU production ML model loaded successfully.")
         return self._model
 

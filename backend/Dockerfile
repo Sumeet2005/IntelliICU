@@ -20,5 +20,8 @@ COPY . .
 # Grant execute rights to startup script
 RUN chmod +x start.sh
 
+# DockHosting / container port
+EXPOSE 8080
+
 # Run startup script
 CMD ["./start.sh"]

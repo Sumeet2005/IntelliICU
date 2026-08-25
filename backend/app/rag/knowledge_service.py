@@ -101,17 +101,9 @@ class KnowledgeService:
             len(self._store),
         )
 
-        if self._semantic_enabled:
-            import threading
-            threading.Thread(
-                target=self._build_embedding_index,
-                name="knowledge-service-embedding-init",
-                daemon=True
-            ).start()
-        else:
-            self._semantic_ready = False
-            self._embedder = None
-
+        self._semantic_ready = False
+        self._embedder = None
+        if not self._semantic_enabled:
             logger.info(
                 "[KnowledgeService] Skipping embedding model initialization."
             )
@@ -138,9 +130,8 @@ class KnowledgeService:
         if not query:
             return []
 
-        # --------------------------------------------------------------
-        # 1. ChromaDB semantic search
-        # --------------------------------------------------------------
+        if self._semantic_enabled and not self._semantic_ready and self._embedder is None:
+            self._build_embedding_index()
 
         if self._semantic_ready and self._embedder is not None:
 

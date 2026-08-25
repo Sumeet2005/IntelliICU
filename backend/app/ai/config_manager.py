@@ -42,7 +42,7 @@ class AIConfigManager:
                     logger.error("[AIConfigManager] Failed to read config file: %s. Using env fallback.", e)
 
             # Fallback defaults
-            provider = os.getenv("CLINICAL_LLM_PROVIDER", "mock").lower()
+            provider = os.getenv("AI_PROVIDER", os.getenv("CLINICAL_LLM_PROVIDER", "mock")).lower()
             default_model = "llama3" if provider == "ollama" else "mock-model"
             if provider == "openai":
                 default_model = os.getenv("OPENAI_MODEL", "gpt-4")
