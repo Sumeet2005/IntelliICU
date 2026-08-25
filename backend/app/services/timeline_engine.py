@@ -103,27 +103,39 @@ class TimelineEngine:
         now = datetime.now()
         event_id = f"ev-{str(uuid.uuid4())[:8]}"
 
-        # Persist to PostgreSQL
-        try:
-            db = SessionLocal()
+        # Persist to PostgreSQL in a background thread to prevent blocking the event loop
+        def save_to_db():
             try:
-                db_event = DBTimelineEvent(
-                    id=event_id,
-                    patient_id=patient_id,
-                    timestamp=now,
-                    time=now.strftime("%H:%M"),
-                    type=event_type,
-                    title=title,
-                    description=description,
-                    actor=actor,
-                    metadata_json=metadata or {}
-                )
-                db.add(db_event)
-                db.commit()
-            finally:
-                db.close()
-        except Exception:
-            pass
+                db = SessionLocal()
+                try:
+                    db_event = DBTimelineEvent(
+                        id=event_id,
+                        patient_id=patient_id,
+                        timestamp=now,
+                        time=now.strftime("%H:%M"),
+                        type=event_type,
+                        title=title,
+                        description=description,
+                        actor=actor,
+                        metadata_json=metadata or {}
+                    )
+                    db.add(db_event)
+                    db.commit()
+                except Exception as e:
+                    db.rollback()
+                finally:
+                    db.close()
+            except Exception:
+                pass
+
+        try:
+            loop = asyncio.get_running_loop()
+            if loop.is_running():
+                loop.run_in_executor(None, save_to_db)
+            else:
+                save_to_db()
+        except RuntimeError:
+            save_to_db()
 
         # In-memory backup
         if patient_id not in self._events:

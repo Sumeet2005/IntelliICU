@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse, Response
 import io
+import asyncio
 
 from app.services.timeline_engine import timeline_engine
 from app.websocket.simulator import simulator
@@ -25,7 +26,7 @@ async def get_timeline(
         if not patient:
             raise HTTPException(status_code=404, detail="Patient not found")
 
-    events = timeline_engine.get_patient_timeline(patient_id, event_type, search)
+    events = await asyncio.to_thread(timeline_engine.get_patient_timeline, patient_id, event_type, search)
     return events
 
 @router.post("/{patient_id}")
@@ -67,7 +68,7 @@ async def export_timeline(
         patient_name = patient["name"] if patient else "Unknown"
 
 
-    events = timeline_engine.get_patient_timeline(patient_id, event_type, search)
+    events = await asyncio.to_thread(timeline_engine.get_patient_timeline, patient_id, event_type, search)
 
     if format == "csv":
         data = timeline_engine.export_csv(patient_id, events)

@@ -160,6 +160,8 @@ export function ClinicalAIProvider({ children }) {
       currentLiveAlerts = [...currentLiveAlerts, ...patientAlerts];
     });
 
+    const auditEventsToCreate = [];
+
     setAlerts(prev => {
       const updated = prev.map(a => ({ ...a }));
       const liveIds = new Set(currentLiveAlerts.map(a => a.id));
@@ -197,27 +199,39 @@ export function ClinicalAIProvider({ children }) {
             }],
           });
 
-          addAuditEvent(
-            liveAlert.id,
-            "Created",
-            `System generated alert: ${liveAlert.message} for ${liveAlert.patient_name}`,
-            timestamp
-          );
+          auditEventsToCreate.push({
+            id: liveAlert.id,
+            action: "Created",
+            detail: `System generated alert: ${liveAlert.message} for ${liveAlert.patient_name}`,
+            time: timestamp
+          });
         }
       });
 
       return updated;
     });
+
+    if (auditEventsToCreate.length > 0) {
+      auditEventsToCreate.forEach(event => {
+        addAuditEvent(event.id, event.action, event.detail, event.time);
+      });
+    }
   }, [patientsList]);
 
   // Escalation engine effect running in background checking unacknowledged critical alerts
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
+      const auditEventsToCreate = [];
+
+      const collectAuditEvent = (id, action, detail, time) => {
+        auditEventsToCreate.push({ id, action, detail, time });
+      };
+
       setAlerts(prev => {
         let changed = false;
         const updated = prev.map(alert => {
-          const escalated = escalationService.checkEscalation(alert, now, addAuditEvent);
+          const escalated = escalationService.checkEscalation(alert, now, collectAuditEvent);
           if (escalated) {
             changed = true;
             return escalated;
@@ -227,6 +241,12 @@ export function ClinicalAIProvider({ children }) {
 
         return changed ? updated : prev;
       });
+
+      if (auditEventsToCreate.length > 0) {
+        auditEventsToCreate.forEach(event => {
+          addAuditEvent(event.id, event.action, event.detail, event.time);
+        });
+      }
     }, 5000);
 
     return () => clearInterval(interval);

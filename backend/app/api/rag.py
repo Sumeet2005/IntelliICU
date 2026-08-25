@@ -18,7 +18,7 @@ from typing import List, Optional
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from app.rag.knowledge_service import KnowledgeService
+from app.rag.knowledge_service import knowledge_service
 from app.rag.services.document_processor import DocumentProcessor
 from app.vector_db.chroma_service import chroma_service
 
@@ -39,8 +39,7 @@ def get_processor() -> DocumentProcessor:
     if _processor is None:
         # Re-use the existing embedder model from the KnowledgeService singleton
         # to avoid double memory footprint of sentence-transformers model.
-        ks = KnowledgeService()
-        _processor = DocumentProcessor(embedder=ks._embedder)
+        _processor = DocumentProcessor(embedder=knowledge_service._embedder)
     return _processor
 
 
@@ -110,8 +109,7 @@ def search_guidelines(
     Execute a hybrid semantic query over clinical guidelines.
     Queries ChromaDB first, falling back to local memory on connection failure or empty results.
     """
-    ks = KnowledgeService()
-    results = ks.search(query=query, top_k=top_k, category=category)
+    results = knowledge_service.search(query=query, top_k=top_k, category=category)
     return {
         "query": query,
         "results_count": len(results),

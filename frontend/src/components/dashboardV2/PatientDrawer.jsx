@@ -485,9 +485,33 @@ export default function PatientDrawer({ open, patientId, onClose }) {
                             <Brain className="w-5 h-5 text-indigo-600" />
                             <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wider">AI Clinical Summary</h3>
                           </div>
-                          <p className="text-indigo-900/80 leading-relaxed text-sm">
-                            {profile.ai.summary}
-                          </p>
+                          <div className="text-indigo-900/80 leading-relaxed text-sm">
+                            {typeof profile.ai.summary === "string" ? (
+                              profile.ai.summary
+                            ) : typeof profile.ai.summary === "object" ? (
+                              <div className="space-y-2">
+                                {profile.ai.summary.overall_condition && (
+                                  <div>
+                                    <strong className="font-bold text-indigo-950">Condition: </strong>
+                                    <span>{profile.ai.summary.overall_condition}</span>
+                                  </div>
+                                )}
+                                {profile.ai.summary.clinical_reasoning && (
+                                  <div>
+                                    <strong className="font-bold text-indigo-950">Reasoning: </strong>
+                                    <span>{profile.ai.summary.clinical_reasoning}</span>
+                                  </div>
+                                )}
+                                {profile.ai.summary.confidence !== undefined && (
+                                  <div className="text-[10px] text-indigo-800/60 mt-1">
+                                    Confidence Level: {Math.round(profile.ai.summary.confidence * 100)}%
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              "AI summary format invalid."
+                            )}
+                          </div>
                         </div>
                       )}
 

@@ -102,7 +102,12 @@ class KnowledgeService:
         )
 
         if self._semantic_enabled:
-            self._build_embedding_index()
+            import threading
+            threading.Thread(
+                target=self._build_embedding_index,
+                name="knowledge-service-embedding-init",
+                daemon=True
+            ).start()
         else:
             self._semantic_ready = False
             self._embedder = None
@@ -810,3 +815,6 @@ class KnowledgeService:
                     break
 
         return score
+
+
+knowledge_service = KnowledgeService()

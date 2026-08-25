@@ -70,24 +70,20 @@ export default function Settings() {
   const loadSettings = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Fetch current config
-      const configRes = await aiService.getConfig();
+      const [configRes, providersRes, modelsRes, healthRes] = await Promise.all([
+        aiService.getConfig(),
+        aiService.getProviders(),
+        aiService.getModels(),
+        aiService.getHealth()
+      ]);
+
       if (configRes.status === "success") {
         setConfig(configRes.config);
       }
-
-      // 2. Fetch providers list
-      const providersRes = await aiService.getProviders();
       if (providersRes.status === "success") {
         setProviders(providersRes.providers);
       }
-
-      // 3. Fetch active models
-      const modelsRes = await aiService.getModels();
       setAvailableModels(modelsRes.models || []);
-
-      // 4. Fetch active health check
-      const healthRes = await aiService.getHealth();
       setHealthStatus(healthRes);
     } catch (err) {
       console.error("[Settings] Error loading AI configurations:", err);

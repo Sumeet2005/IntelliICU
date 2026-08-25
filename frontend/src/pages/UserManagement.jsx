@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -33,6 +33,7 @@ export default function UserManagement() {
   const [roles, setRoles] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   // Dialog states
@@ -49,6 +50,7 @@ export default function UserManagement() {
   const [department, setDepartment] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [newPassword, setNewPassword] = useState("");
+  const prevFiltersRef = useRef({ search, roleFilter, deptFilter });
 
   const loadData = async () => {
     try {
@@ -67,9 +69,11 @@ export default function UserManagement() {
 
   const loadMetaData = async () => {
     try {
-      const rolesData = await permissionService.getAllRoles();
+      const [rolesData, deptsData] = await Promise.all([
+        permissionService.getAllRoles(),
+        userService.getDepartments()
+      ]);
       setRoles(rolesData || []);
-      const deptsData = await userService.getDepartments();
       setDepartments(deptsData || []);
     } catch (err) {
       console.error(err);
@@ -81,10 +85,19 @@ export default function UserManagement() {
   }, []);
 
   useEffect(() => {
-    setPage(1);
-  }, [search, roleFilter, deptFilter]);
+    const filtersChanged =
+      prevFiltersRef.current.search !== search ||
+      prevFiltersRef.current.roleFilter !== roleFilter ||
+      prevFiltersRef.current.deptFilter !== deptFilter;
 
-  useEffect(() => {
+    if (filtersChanged) {
+      prevFiltersRef.current = { search, roleFilter, deptFilter };
+      if (page !== 1) {
+        setPage(1);
+        return;
+      }
+    }
+
     loadData();
   }, [search, roleFilter, deptFilter, page]);
 
@@ -94,8 +107,12 @@ export default function UserManagement() {
       setError("Please fill out all required fields.");
       return;
     }
+    if (role !== "HospitalAdmin" && !department) {
+      setError("Please select a department for this role.");
+      return;
+    }
     try {
-      setLoading(true);
+      setSubmitting(true);
       setError("");
       await userService.createUser({
         username,
@@ -106,11 +123,11 @@ export default function UserManagement() {
       });
       setAddOpen(false);
       resetForms();
-      loadData();
+      await loadData();
     } catch (err) {
       setError(err.response?.data?.detail || "Failed to create user account.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -121,7 +138,7 @@ export default function UserManagement() {
       return;
     }
     try {
-      setLoading(true);
+      setSubmitting(true);
       setError("");
       await userService.updateUser(selectedUser.id, {
         email,
@@ -131,11 +148,11 @@ export default function UserManagement() {
       });
       setEditOpen(false);
       resetForms();
-      loadData();
+      await loadData();
     } catch (err) {
       setError(err.response?.data?.detail || "Failed to update user details.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -146,7 +163,7 @@ export default function UserManagement() {
       return;
     }
     try {
-      setLoading(true);
+      setSubmitting(true);
       setError("");
       await userService.resetUserPassword(selectedUser.id, newPassword);
       setResetOpen(false);
@@ -154,7 +171,7 @@ export default function UserManagement() {
     } catch (err) {
       setError(err.response?.data?.detail || "Failed to reset password.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -472,22 +489,35 @@ export default function UserManagement() {
                     <select
                       required
                       value={role}
-                      onChange={(e) => setRole(e.target.value)}
+                      onChange={(e) => {
+                        setRole(e.target.value);
+                        if (e.target.value === "HospitalAdmin") {
+                          setDepartment("");
+                        }
+                      }}
                       className="input-clinical font-bold"
                     >
                       <option value="">Select Role</option>
-                      {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
+                      <option value="HospitalAdmin">Admin</option>
+                      <option value="ICUManager">ICU Manager</option>
+                      <option value="Doctor">Doctor</option>
+                      <option value="Nurse">Nurse</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Department</label>
                     <select
+                      required={role !== "HospitalAdmin" && role !== ""}
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
                       className="input-clinical font-bold"
                     >
-                      <option value="">None</option>
-                      {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                      <option value="">{role === "HospitalAdmin" ? "None / All Departments" : "Select Department"}</option>
+                      <option value="General ICU">General ICU</option>
+                      <option value="Cardiac ICU">Cardiac ICU</option>
+                      <option value="Neurology ICU">Neurology ICU</option>
+                      <option value="Emergency & Trauma">Emergency & Trauma</option>
+                      <option value="Pulmonology">Pulmonology</option>
                     </select>
                   </div>
                 </div>
@@ -502,9 +532,10 @@ export default function UserManagement() {
                   </button>
                   <button
                     type="submit"
-                    className="btn-clinical-primary flex-1"
+                    disabled={submitting}
+                    className="btn-clinical-primary flex-1 disabled:opacity-50"
                   >
-                    Create User
+                    {submitting ? "Creating..." : "Create User"}
                   </button>
                 </div>
               </form>
@@ -604,9 +635,10 @@ export default function UserManagement() {
                   </button>
                   <button
                     type="submit"
-                    className="btn-clinical-primary flex-1"
+                    disabled={submitting}
+                    className="btn-clinical-primary flex-1 disabled:opacity-50"
                   >
-                    Save Changes
+                    {submitting ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
               </form>
@@ -673,9 +705,10 @@ export default function UserManagement() {
                   </button>
                   <button
                     type="submit"
-                    className="btn-clinical-primary flex-1"
+                    disabled={submitting}
+                    className="btn-clinical-primary flex-1 disabled:opacity-50"
                   >
-                    Reset Password
+                    {submitting ? "Resetting..." : "Reset Password"}
                   </button>
                 </div>
               </form>

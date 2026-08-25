@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.schemas.rbac import PermissionResponse, RoleResponse, UserPermissionsResponse
 from app.repositories.rbac_repository import RBACRepository
 from app.core.dependencies.auth import get_current_user
-from app.core.dependencies.rbac import require_roles
+from app.core.dependencies.rbac import require_roles, require_permission
 from app.models.user import User
 
 router = APIRouter(
@@ -12,13 +12,13 @@ router = APIRouter(
 
 @router.get("/roles", response_model=list[RoleResponse])
 async def get_roles(
-    current_user: User = Depends(require_roles(["SuperAdmin", "HospitalAdmin"]))
+    current_user: User = Depends(require_permission("UserManagement"))
 ):
     return RBACRepository.get_all_roles()
 
 @router.get("/permissions", response_model=list[PermissionResponse])
 async def get_permissions(
-    current_user: User = Depends(require_roles(["SuperAdmin", "HospitalAdmin"]))
+    current_user: User = Depends(require_permission("UserManagement"))
 ):
     return RBACRepository.get_all_permissions()
 

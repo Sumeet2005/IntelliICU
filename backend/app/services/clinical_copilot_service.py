@@ -21,7 +21,7 @@ from typing import Dict, Any, Generator, List, Tuple
 from app.services.context_builder import PatientContextBuilder
 from app.services.context_optimizer import ContextOptimizer
 from app.ai.mock_llm import MockClinicalLLM
-from app.rag.knowledge_service import KnowledgeService
+from app.rag.knowledge_service import knowledge_service
 from app.clinical_reasoning.differential_engine import DifferentialEngine
 from app.clinical_reasoning.treatment_engine import TreatmentEngine
 from app.clinical_reasoning.medication_engine import MedicationEngine
@@ -48,7 +48,7 @@ class ClinicalCopilotService:
     def __init__(self):
         self.context_builder = PatientContextBuilder()
         self.llm             = MockClinicalLLM()
-        self.knowledge       = KnowledgeService()
+        self.knowledge       = knowledge_service
 
         # Configuration
         self.max_tokens = int(os.getenv("CLINICAL_LLM_MAX_TOKENS", 400))

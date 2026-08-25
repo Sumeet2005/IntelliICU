@@ -263,7 +263,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.get("/ready")
 @app.get("/live")
 async def health_check():
-    db_ok = check_db_connectivity()
+    db_ok = await asyncio.to_thread(check_db_connectivity)
     
     # 1. Check AI Provider
     ai_ok = False

@@ -1,5 +1,7 @@
 import api from "../api/axios";
 
+let deptsPromise = null;
+
 export const userService = {
   getUsers: async (search = "", role = "", department = "", page = 1, size = 10) => {
     const params = { page, size };
@@ -40,7 +42,12 @@ export const userService = {
   },
 
   getDepartments: async () => {
-    const response = await api.get("/departments");
-    return response.data;
+    if (!deptsPromise) {
+      deptsPromise = api.get("/departments").then(response => response.data).catch(err => {
+        deptsPromise = null;
+        throw err;
+      });
+    }
+    return deptsPromise;
   }
 };

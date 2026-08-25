@@ -57,18 +57,22 @@ MOCK_ROLES = {
     )
 }
 
+from functools import lru_cache
+
 class RBACRepository:
     @staticmethod
+    @lru_cache(maxsize=32)
     def get_role_by_name(name: str) -> Role | None:
         try:
             db = SessionLocal()
             try:
                 db_role = db.query(DBRole).filter(DBRole.name.ilike(name)).first()
                 if db_role:
+                    perms = [p.name for p in db_role.permissions]
                     return Role(
                         id=db_role.id,
                         name=db_role.name,
-                        permissions=[p.name for p in db_role.permissions]
+                        permissions=perms
                     )
             finally:
                 db.close()

@@ -39,8 +39,11 @@ MOCK_USERS = {
     }
 }
 
+from functools import lru_cache
+
 class UserRepository:
     @staticmethod
+    @lru_cache(maxsize=128)
     def get_by_username(username: str) -> User | None:
         try:
             db = SessionLocal()
@@ -233,6 +236,9 @@ class UserRepository:
                     department=db_user.department,
                     is_active=db_user.is_active,
                 )
+            except Exception as e:
+                db.rollback()
+                raise e
             finally:
                 db.close()
         except ValueError:
@@ -295,6 +301,7 @@ class UserRepository:
                         u["department"] = db_user.department
                         u["is_active"] = db_user.is_active
                         break
+                UserRepository.get_by_username.cache_clear()
                         
                 return User(
                     id=db_user.id,
@@ -305,6 +312,9 @@ class UserRepository:
                     department=db_user.department,
                     is_active=db_user.is_active,
                 )
+            except Exception as e:
+                db.rollback()
+                raise e
             finally:
                 db.close()
         except ValueError:
@@ -328,6 +338,7 @@ class UserRepository:
         if "is_active" in update_data:
             user_dict["is_active"] = update_data["is_active"]
             
+        UserRepository.get_by_username.cache_clear()
         return User(**user_dict)
 
     @staticmethod
@@ -346,7 +357,11 @@ class UserRepository:
                     if u["id"] == user_id:
                         u["hashed_password"] = hashed_password
                         break
+                UserRepository.get_by_username.cache_clear()
                 return True
+            except Exception as e:
+                db.rollback()
+                raise e
             finally:
                 db.close()
         except Exception:
@@ -357,4 +372,5 @@ class UserRepository:
         if not user_dict:
             return False
         user_dict["hashed_password"] = hashed_password
+        UserRepository.get_by_username.cache_clear()
         return True

@@ -211,6 +211,8 @@ class ICUSimulator:
 
         self.alerts = []
         self.last_vitals_log = {}
+        self.last_db_sync = None
+        self.admission_cache = {}
 
     async def start(self):
 
@@ -250,7 +252,7 @@ class ICUSimulator:
                     "data": self.patients,
                 }
             )
-            
+
             await manager.broadcast_alerts(
                 {
                     "type": "alerts_update",
@@ -261,7 +263,7 @@ class ICUSimulator:
                      ],
                 }
             )
-            
+
             for patient in self.patients:
                 await manager.broadcast_patient(
                     patient["id"],
@@ -457,21 +459,46 @@ class ICUSimulator:
             except Exception:
                 pass
 
-            # Write-through to database to maintain PostgreSQL as source of truth
+        # Write-through to database to maintain PostgreSQL as source of truth periodically (every 10s)
+        now = datetime.now()
+        if self.last_db_sync is None or (now - self.last_db_sync).total_seconds() >= 10:
+            self.last_db_sync = now
+            patients_to_sync = [dict(p) for p in self.patients]
+
+            # Offload PostgreSQL write-through to a background thread to prevent event loop starvation
             try:
-                db = SessionLocal()
-                try:
-                    adm = db.query(Admission).filter(Admission.patient_id == patient["id"]).first()
-                    if adm:
+                loop = asyncio.get_running_loop()
+                loop.run_in_executor(None, self._sync_patients_to_db_blocking, patients_to_sync)
+            except RuntimeError:
+                self._sync_patients_to_db_blocking(patients_to_sync)
+
+    def _sync_patients_to_db_blocking(self, patients_data):
+        """
+        Synchronizes patient states and inserts vitals in a single DB session.
+        Runs in a background thread to prevent event loop starvation.
+        """
+        try:
+            db = SessionLocal()
+            try:
+                for patient in patients_data:
+                    # Use cache to avoid redundant select queries on Admission
+                    adm_id = self.admission_cache.get(patient["id"])
+                    if not adm_id:
+                        adm = db.query(Admission).filter(Admission.patient_id == patient["id"]).first()
+                        if adm:
+                            self.admission_cache[patient["id"]] = adm.id
+                            adm_id = adm.id
+
+                    if adm_id:
                         # Sync status
                         p_db = db.query(Patient).filter(Patient.id == patient["id"]).first()
                         if p_db:
                             p_db.status = patient["status"]
-                            
+
                         # Add new VitalSign record
                         v_db = VitalSign(
                             id=f"vit-{str(uuid.uuid4())[:8]}",
-                            admission_id=adm.id,
+                            admission_id=adm_id,
                             heart_rate=float(patient["heart_rate"]),
                             systolic_bp=float(patient["systolic_bp"]),
                             diastolic_bp=float(patient["diastolic_bp"]),
@@ -482,17 +509,20 @@ class ICUSimulator:
                             urine_output_ml=50.0,
                         )
                         db.add(v_db)
-                        
+
                         # Sync lactate
-                        l_db = db.query(LabResult).filter(LabResult.admission_id == adm.id).order_by(LabResult.collected_at.desc()).first()
+                        l_db = db.query(LabResult).filter(LabResult.admission_id == adm_id).order_by(LabResult.collected_at.desc()).first()
                         if l_db:
                             l_db.lactate = float(patient["lactate"])
-                            
-                    db.commit()
-                finally:
-                    db.close()
+
+                db.commit()
             except Exception:
-                pass
+                db.rollback()
+            finally:
+                db.close()
+        except Exception:
+            pass
+
 
     def _generate_alerts(self):
         for patient in self.patients:

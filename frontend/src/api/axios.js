@@ -35,6 +35,10 @@ api.interceptors.response.use(
     (response) => response,
 
     async (error) => {
+        if (axios.isCancel(error)) {
+            return Promise.reject(error);
+        }
+
         const originalRequest = error.config;
 
         const isNetworkError =

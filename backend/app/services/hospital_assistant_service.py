@@ -28,7 +28,7 @@ from datetime import datetime
 from typing import Any, Dict, Generator, List, Optional
 
 from app.ai.mock_llm import MockClinicalLLM
-from app.rag.knowledge_service import KnowledgeService
+from app.rag.knowledge_service import knowledge_service
 from app.telemetry.trend_engine import telemetry_engine
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ class HospitalAssistantService:
 
     def __init__(self) -> None:
         self.llm       = MockClinicalLLM()
-        self.knowledge = KnowledgeService()
+        self.knowledge = knowledge_service
         # Conversation memory keyed by session ID ("hospital" for the default session).
         self._memory: Dict[str, List[Dict]] = {}
 

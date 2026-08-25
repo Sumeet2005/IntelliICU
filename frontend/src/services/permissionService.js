@@ -1,5 +1,8 @@
 import api from "../api/axios";
 
+let rolesPromise = null;
+let permissionsPromise = null;
+
 export const permissionService = {
   getMyPermissions: async () => {
     const response = await api.get("/rbac/users/me/permissions");
@@ -7,12 +10,22 @@ export const permissionService = {
   },
 
   getAllRoles: async () => {
-    const response = await api.get("/rbac/roles");
-    return response.data;
+    if (!rolesPromise) {
+      rolesPromise = api.get("/rbac/roles").then(response => response.data).catch(err => {
+        rolesPromise = null;
+        throw err;
+      });
+    }
+    return rolesPromise;
   },
 
   getAllPermissions: async () => {
-    const response = await api.get("/rbac/permissions");
-    return response.data;
+    if (!permissionsPromise) {
+      permissionsPromise = api.get("/rbac/permissions").then(response => response.data).catch(err => {
+        permissionsPromise = null;
+        throw err;
+      });
+    }
+    return permissionsPromise;
   }
 };
