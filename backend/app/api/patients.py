@@ -12,9 +12,12 @@ from app.models.vital_sign import VitalSign
 from app.models.lab_result import LabResult
 from app.websocket.simulator import simulator
 
+from app.core.dependencies.auth import get_current_user
+
 router = APIRouter(
     prefix="/patients",
     tags=["Patients"],
+    dependencies=[Depends(get_current_user)],
 )
 
 # ---------------------------------------------------------------------

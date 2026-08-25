@@ -2,13 +2,15 @@
 Enterprise Alert API
 """
 
-from fastapi import APIRouter, HTTPException
-
+from fastapi import APIRouter, HTTPException, Depends
+from app.models.user import User
+from app.core.dependencies.auth import get_current_user
 from app.alerts.manager import manager as alert_manager
 
 router = APIRouter(
     prefix="/alerts",
     tags=["Alerts"],
+    dependencies=[Depends(get_current_user)],
 )
 
 

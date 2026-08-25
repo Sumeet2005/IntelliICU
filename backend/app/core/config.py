@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     DATABASE_PORT: int = 5433
     DATABASE_NAME: str = "intelliicu"
     DATABASE_USER: str = "postgres"
-    DATABASE_PASSWORD: str = "YOUR_PASSWORD"
+    DATABASE_PASSWORD: str = "Sumeet"
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:

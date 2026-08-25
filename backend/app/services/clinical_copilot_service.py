@@ -20,7 +20,7 @@ from typing import Dict, Any, Generator, List, Tuple
 
 from app.services.context_builder import PatientContextBuilder
 from app.services.context_optimizer import ContextOptimizer
-from app.ai.mock_llm import MockClinicalLLM
+from app.ai.factory import get_llm_provider
 from app.rag.knowledge_service import knowledge_service
 from app.clinical_reasoning.differential_engine import DifferentialEngine
 from app.clinical_reasoning.treatment_engine import TreatmentEngine
@@ -47,7 +47,12 @@ class ClinicalCopilotService:
 
     def __init__(self):
         self.context_builder = PatientContextBuilder()
-        self.llm             = MockClinicalLLM()
+        try:
+            self.llm = get_llm_provider()
+        except Exception as err:
+            logger.warning(f"Failed to initialize LLM provider via factory ({err}), using MockClinicalLLM.")
+            from app.ai.mock_llm import MockClinicalLLM
+            self.llm = MockClinicalLLM()
         self.knowledge       = knowledge_service
 
         # Configuration

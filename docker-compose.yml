@@ -6,7 +6,7 @@ services:
     container_name: intelliicu-db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Sumeet
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Sumeet}
       POSTGRES_DB: intelliicu
     ports:
       - "5433:5432"
@@ -28,9 +28,11 @@ services:
       - DATABASE_PORT=5432
       - DATABASE_NAME=intelliicu
       - DATABASE_USER=postgres
-      - DATABASE_PASSWORD=Sumeet
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-${POSTGRES_PASSWORD:-Sumeet}}
+      - PORT=8000
       - DEBUG=False
-      - AUTH_SECRET_KEY=intelliicu_super_secret_key_change_me_in_production
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost,http://localhost:80,http://localhost:5173,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:80,http://127.0.0.1:5173,http://127.0.0.1:3000,https://intelliicu-production.up.railway.app}
+      - AUTH_SECRET_KEY=${AUTH_SECRET_KEY:-intelliicu_dev_secret_key_change_in_prod}
     ports:
       - "8000:8000"
     depends_on:
@@ -42,6 +44,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api}
+        VITE_WS_BASE_URL: ${VITE_WS_BASE_URL:-ws://localhost:8000/ws}
     container_name: intelliicu-frontend
     ports:
       - "80:80"

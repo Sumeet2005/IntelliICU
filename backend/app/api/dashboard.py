@@ -2,7 +2,9 @@
 Dashboard API
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.models.user import User
+from app.core.dependencies.auth import get_current_user
 
 router = APIRouter(
     prefix="/dashboard",
@@ -11,7 +13,7 @@ router = APIRouter(
 
 
 @router.get("/")
-def get_dashboard():
+def get_dashboard(current_user: User = Depends(get_current_user)):
 
     return {
         "total_patients": 48,

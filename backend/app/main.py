@@ -30,6 +30,7 @@ from app.telemetry.routes import router as telemetry_router
 from app.api.hospital_assistant import router as hospital_assistant_router
 from app.api.rag import router as rag_router
 from app.api.ai import router as ai_router
+from app.api.v1.router import router as v1_router
 
 # =====================================================
 # WebSocket Routers
@@ -139,10 +140,21 @@ async def startup_protection_middleware(request: Request, call_next):
 # CORS
 # =====================================================
 
-origins = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:5173"
-).split(",")
+raw_origins = os.getenv("ALLOWED_ORIGINS")
+if raw_origins:
+    origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+else:
+    origins = [
+        "http://localhost",
+        "http://localhost:80",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1",
+        "http://127.0.0.1:80",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+        "https://intelliicu-production.up.railway.app",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -228,6 +240,11 @@ app.include_router(
 app.include_router(
     ai_router,
     prefix="/api",
+)
+
+app.include_router(
+    v1_router,
+    prefix="/api/v1",
 )
 
 # =====================================================

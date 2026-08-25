@@ -2,7 +2,8 @@
 Clinical AI API
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.core.dependencies.auth import get_current_user
 
 from app.clinical_ai.clinical_ai_service import ClinicalAIService
 from app.schemas.clinical_ai import ClinicalAIRequest
@@ -11,6 +12,7 @@ from app.schemas.clinical_ai_response import ClinicalAIResponse
 router = APIRouter(
     prefix="/clinical-ai",
     tags=["Clinical AI"],
+    dependencies=[Depends(get_current_user)],
 )
 
 service = ClinicalAIService()
