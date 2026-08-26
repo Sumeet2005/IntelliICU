@@ -154,6 +154,9 @@ else:
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
         "https://intelliicu-production.up.railway.app",
+        "https://intelli-icu-eight.vercel.app",
+        "https://intelli-icu-git-main-sumeet17.vercel.app",
+        "https://intelli-dpvqjmsvu-sumeet17.vercel.app",
     ]
 
 app.add_middleware(
