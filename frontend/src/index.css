@@ -271,3 +271,24 @@ body {
 }
 .prose-clinical > *:first-child { margin-top: 0; }
 .prose-clinical > *:last-child  { margin-bottom: 0; }
+/* Continuous ECG/SpO2 Waveform Slide Keyframe Animation */
+@keyframes slide {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-400px);
+  }
+}
+
+
+/* Floating Idle Animation for Workstation HUD */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+

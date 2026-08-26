@@ -17,7 +17,7 @@ const wsProtocol =
  * IntelliICU Environment Configuration
  *
  * Production:
- *   Uses Railway backend URLs.
+ *   Uses DockHosting production backend URLs by default, or VITE environment variables.
  *
  * Development:
  *   Uses VITE environment variables when available,
@@ -27,13 +27,13 @@ const wsProtocol =
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (isProduction
-    ? "https://intelliicu-production.up.railway.app/api"
+    ? "https://intelliicu.dockhosting.dev/api"
     : `${protocol}//${hostname}:8000/api`);
 
 const WS_BASE_URL =
   import.meta.env.VITE_WS_BASE_URL ||
   (isProduction
-    ? "wss://intelliicu-production.up.railway.app/ws"
+    ? "wss://intelliicu.dockhosting.dev/ws"
     : `${wsProtocol}//${hostname}:8000/ws`);
 
 const config = {

@@ -18,8 +18,8 @@ WORKDIR /app
 # when `npm run build` executes.
 # -----------------------------------------------------
 
-ARG VITE_API_BASE_URL=http://localhost:8000/api
-ARG VITE_WS_BASE_URL=ws://localhost:8000/ws
+ARG VITE_API_BASE_URL=https://intelliicu.dockhosting.dev/api
+ARG VITE_WS_BASE_URL=wss://intelliicu.dockhosting.dev/ws
 
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 ENV VITE_WS_BASE_URL=${VITE_WS_BASE_URL}
