@@ -60,5 +60,3 @@ reportlab>=4.2.2
 # Logging
 # =========================
 structlog>=24.4.0
-
-torch
