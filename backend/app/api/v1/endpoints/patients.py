@@ -9,6 +9,7 @@ from fastapi import status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_db
+from app.core.dependencies.rbac import require_permission
 from app.repositories.patient_repository import PatientRepository
 from app.schemas.patient import (
     PatientCreate,
@@ -20,6 +21,7 @@ from app.services.patient_service import PatientService
 router = APIRouter(
     prefix="/patients",
     tags=["Patients"],
+    dependencies=[Depends(require_permission("Patients"))],
 )
 
 

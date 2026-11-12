@@ -13,11 +13,12 @@ from app.models.lab_result import LabResult
 from app.websocket.simulator import simulator
 
 from app.core.dependencies.auth import get_current_user
+from app.core.dependencies.rbac import require_permission
 
 router = APIRouter(
     prefix="/patients",
     tags=["Patients"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(require_permission("Patients"))],
 )
 
 # ---------------------------------------------------------------------

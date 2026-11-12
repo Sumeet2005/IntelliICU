@@ -5,6 +5,7 @@ Laboratory Results API Endpoints.
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.core.dependencies.rbac import require_permission
 from app.database.session import SessionLocal
 from app.repositories.lab_result_repository import LabResultRepository
 from app.schemas.lab_result import (
@@ -17,6 +18,7 @@ from app.services.lab_result_service import LabResultService
 router = APIRouter(
     prefix="/lab-results",
     tags=["Laboratory Results"],
+    dependencies=[Depends(require_permission("Patients"))],
 )
 
 

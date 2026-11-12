@@ -19,11 +19,16 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Depends
 from pydantic import BaseModel, Field
 
 from app.core.dependencies.auth import get_current_user
+from app.core.dependencies.rbac import require_permission
+from app.models.user import User
 from app.rag.knowledge_service import knowledge_service
 from app.rag.services.document_processor import DocumentProcessor
 from app.vector_db.chroma_service import chroma_service
 
 logger = logging.getLogger(__name__)
+
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md"}
 
 router = APIRouter(
     prefix="/rag",
@@ -67,14 +72,29 @@ async def upload_document(
     section: str = Form(..., description="Guideline sub-section"),
     tags: Optional[str] = Form(default="", description="Comma-separated keyword tags"),
     file: UploadFile = File(..., description="Clinical guideline file (.pdf, .docx, .txt, .md)"),
+    current_user: User = Depends(require_permission("Settings")),
 ):
     """
     Ingest a clinical guideline file, extract its text content, split into overlapping chunks,
     generate vector embeddings using sentence-transformers, and persist to ChromaDB.
     """
-    filename = file.filename or "uploaded_document"
+    import os
+    filename = os.path.basename(file.filename or "uploaded_document")
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"Unsupported file extension '{ext}'. Allowed: {sorted(ALLOWED_EXTENSIONS)}")
+
     try:
         file_bytes = await file.read()
+        if not file_bytes:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+        if len(file_bytes) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail=f"File exceeds maximum size of {MAX_UPLOAD_BYTES // (1024 * 1024)} MB.")
+        if ext == ".pdf" and not file_bytes.startswith(b"%PDF"):
+            raise HTTPException(status_code=400, detail="Invalid PDF file signature.")
+        if ext == ".docx" and not file_bytes.startswith(b"PK\x03\x04"):
+            raise HTTPException(status_code=400, detail="Invalid DOCX file signature.")
+
         tags_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
 
         processor = get_processor()
@@ -87,6 +107,7 @@ async def upload_document(
             section=section,
             tags=tags_list,
         )
+        logger.info("[AUDIT] RAG document uploaded by user=%s filename=%s chunks=%d", current_user.username, filename, len(chunk_ids))
 
         return {
             "status": "success",
@@ -94,6 +115,8 @@ async def upload_document(
             "chunks_count": len(chunk_ids),
             "chunk_ids": chunk_ids,
         }
+    except HTTPException:
+        raise
     except ValueError as val_err:
         raise HTTPException(status_code=400, detail=str(val_err))
     except Exception as exc:
@@ -161,7 +184,10 @@ def list_documents():
 
 
 @router.delete("/documents/{identifier}", summary="Delete Document or Chunk")
-def delete_document(identifier: str):
+def delete_document(
+    identifier: str,
+    current_user: User = Depends(require_permission("Settings")),
+):
     """
     Remove documents/chunks from ChromaDB matching either the exact chunk ID
     or matching the 'filename' metadata.

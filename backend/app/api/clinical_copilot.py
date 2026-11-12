@@ -5,7 +5,8 @@ Exposes endpoints for chat reasoning, patient context inquiries, and clinical re
 
 from fastapi import APIRouter, HTTPException, Response, Depends
 from fastapi.responses import StreamingResponse
-from app.core.dependencies.auth import get_current_user
+from app.ai.providers.exceptions import LLMUnavailableError
+from app.core.dependencies.rbac import require_permission
 from app.schemas.clinical_chat import ClinicalChatRequest, ClinicalChatResponse
 from app.schemas.clinical_report import ClinicalReportRequest, ClinicalReportResponse
 from app.services.clinical_copilot_service import ClinicalCopilotService
@@ -14,7 +15,7 @@ from app.services.report_generator import ClinicalReportGenerator
 router = APIRouter(
     prefix="/clinical-copilot",
     tags=["Clinical Copilot"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(require_permission("ClinicalAI"))],
 )
 
 service = ClinicalCopilotService()
@@ -37,11 +38,14 @@ def chat_endpoint(request: ClinicalChatRequest, stream: bool = False):
         )
         return StreamingResponse(generator, media_type="text/event-stream")
     else:
-        result = service.get_answer(
-            patient_id=request.patient_id,
-            question=request.question,
-        )
-        return result
+        try:
+            result = service.get_answer(
+                patient_id=request.patient_id,
+                question=request.question,
+            )
+            return result
+        except LLMUnavailableError as exc:
+            raise HTTPException(status_code=503, detail=exc.sanitized_message)
 
 @router.post(
     "/report",
@@ -59,6 +63,8 @@ def create_report(request: ClinicalReportRequest):
             report_type=request.report_type
         )
         return result
+    except LLMUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=exc.sanitized_message)
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -95,5 +101,7 @@ def download_pdf(report_id: str):
                 "Content-Disposition": f"attachment; filename=clinical_report_{report_id}.pdf"
             }
         )
+    except LLMUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=exc.sanitized_message)
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))

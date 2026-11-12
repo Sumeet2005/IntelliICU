@@ -1,3 +1,4 @@
+import os
 import logging
 from datetime import date, datetime, timedelta
 from app.database.session import SessionLocal
@@ -11,28 +12,20 @@ from app.repositories.user_repository import MOCK_USERS
 
 logger = logging.getLogger("app.database")
 
-def seed_database_if_empty():
+
+def seed_database_if_empty(force: bool = False):
     """
-    Purges placeholder patients and seeds the database with 10 high-fidelity ICU patients,
-    roles, departments, users, alerts, and timeline logs.
+    Idempotently seeds demo roles, permissions, departments, users, and synthetic ICU patients
+    ONLY when explicitly enabled (ENABLE_DEMO_SEED=true or force=True).
+    Never deletes or overwrites existing clinical records.
     """
+    enabled = force or os.getenv("ENABLE_DEMO_SEED", "false").strip().lower() in {"1", "true", "yes"}
+    if not enabled:
+        logger.info("Demo seeder skipped (ENABLE_DEMO_SEED is not enabled).")
+        return
+
     db = SessionLocal()
     try:
-        # 1. Clean up "string string" or other dummy test data to avoid pollution
-        placeholders = db.query(Patient).filter(
-            (Patient.first_name.ilike("%string%")) | 
-            (Patient.last_name.ilike("%string%"))
-        ).all()
-        if placeholders:
-            logger.info(f"🗑 Purging {len(placeholders)} placeholder patients...")
-            for p in placeholders:
-                adms = db.query(Admission).filter(Admission.patient_id == p.id).all()
-                for adm in adms:
-                    db.query(VitalSign).filter(VitalSign.admission_id == adm.id).delete()
-                    db.query(LabResult).filter(LabResult.admission_id == adm.id).delete()
-                    db.delete(adm)
-                db.delete(p)
-            db.commit()
 
         # 2. Seed default permissions if empty
         if db.query(DBPermission).count() == 0:
@@ -87,21 +80,9 @@ def seed_database_if_empty():
             db.add_all(users)
             db.commit()
 
-        # 6. Seed 10 realistic ICU patient profiles if count is less than 10
-        if db.query(Patient).count() < 10:
-            logger.info("🌱 Wiping and seeding 10 high-fidelity ICU patients...")
-            from sqlalchemy import text
-            try:
-                db.execute(text("DELETE FROM predictions"))
-            except Exception:
-                pass
-            db.query(DBAlert).delete()
-            db.query(DBTimelineEvent).delete()
-            db.query(VitalSign).delete()
-            db.query(LabResult).delete()
-            db.query(Admission).delete()
-            db.query(Patient).delete()
-            db.commit()
+        # 6. Seed 10 synthetic demo ICU patient profiles ONLY if patients table is completely empty
+        if db.query(Patient).count() == 0:
+            logger.info("Seeding 10 synthetic demo ICU patients...")
 
             patients_data = [
                 {"id": "ICU-10248", "first": "Amelia", "last": "Chen", "dob": date(1959, 1, 12), "gender": "Female", "status": "Critical", "diag": "Septic Shock", "bed": "MICU-04"},

@@ -36,9 +36,20 @@ class WebSocketService {
 
     if (!state.url) return;
 
+    const token = typeof localStorage !== "undefined" ? localStorage.getItem("access_token") : null;
+    if (!token) {
+      state.connected = false;
+      return;
+    }
+
+    const separator = state.url.includes("?") ? "&" : "?";
+    const authedUrl = state.url.includes("token=")
+      ? state.url
+      : `${state.url}${separator}token=${encodeURIComponent(token)}`;
+
     try {
-      state.socket = new WebSocket(state.url);
-    } catch (e) {
+      state.socket = new WebSocket(authedUrl);
+    } catch {
       state.connected = false;
       state.socket = null;
       this._reconnect(channel);

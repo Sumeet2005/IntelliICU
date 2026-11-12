@@ -1,20 +1,30 @@
+import os
+import logging
 import bcrypt
 import uuid
 from app.models.user import User
 from app.database.session import SessionLocal
 from app.database.models import DBUser
 
+logger = logging.getLogger(__name__)
+
+
+def _allow_mock_fallback() -> bool:
+    return os.getenv("ALLOW_MOCK_AUTH_FALLBACK", "false").strip().lower() in {"1", "true", "yes"}
+
+
 def hash_pw(password: str) -> str:
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
-# Seed users with department fields added (for mock fallback)
+
+# Seed reference users (used only by explicit demo seeder or isolated unit tests when ALLOW_MOCK_AUTH_FALLBACK=true)
 MOCK_USERS = {
     "admin": {
         "id": "usr-1",
         "username": "admin",
         "email": "admin@intelliicu.org",
-        "hashed_password": hash_pw("admin123"),
+        "hashed_password": hash_pw(os.getenv("DEMO_ADMIN_PASSWORD", "admin123")),
         "role": "HospitalAdmin",
         "department": "Administration",
         "is_active": True
@@ -23,7 +33,7 @@ MOCK_USERS = {
         "id": "usr-2",
         "username": "reyes",
         "email": "reyes@intelliicu.org",
-        "hashed_password": hash_pw("intensivist123"),
+        "hashed_password": hash_pw(os.getenv("DEMO_MANAGER_PASSWORD", "intensivist123")),
         "role": "ICUManager",
         "department": "Medical ICU",
         "is_active": True
@@ -32,7 +42,7 @@ MOCK_USERS = {
         "id": "usr-3",
         "username": "miller",
         "email": "miller@intelliicu.org",
-        "hashed_password": hash_pw("miller123"),
+        "hashed_password": hash_pw(os.getenv("DEMO_DOCTOR_PASSWORD", "miller123")),
         "role": "Doctor",
         "department": "Medical ICU",
         "is_active": True
@@ -41,31 +51,33 @@ MOCK_USERS = {
 
 class UserRepository:
     @staticmethod
+    def _to_domain(db_user: DBUser) -> User:
+        return User(
+            id=db_user.id,
+            username=db_user.username,
+            email=db_user.email,
+            hashed_password=db_user.hashed_password,
+            role=db_user.role,
+            department=db_user.department,
+            is_active=db_user.is_active,
+        )
+
+    @staticmethod
     def get_by_username(username: str) -> User | None:
         try:
             db = SessionLocal()
             try:
                 db_user = db.query(DBUser).filter(DBUser.username.ilike(username)).first()
-                if db_user:
-                    return User(
-                        id=db_user.id,
-                        username=db_user.username,
-                        email=db_user.email,
-                        hashed_password=db_user.hashed_password,
-                        role=db_user.role,
-                        department=db_user.department,
-                        is_active=db_user.is_active,
-                    )
+                return UserRepository._to_domain(db_user) if db_user else None
             finally:
                 db.close()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.error("Database error in get_by_username: %s", exc)
+            if not _allow_mock_fallback():
+                return None
 
-        # Fallback to mock
         user_dict = MOCK_USERS.get(username.lower())
-        if not user_dict:
-            return None
-        return User(**user_dict)
+        return User(**user_dict) if user_dict else None
 
     @staticmethod
     def get_by_email(email: str) -> User | None:
@@ -73,29 +85,19 @@ class UserRepository:
             db = SessionLocal()
             try:
                 db_user = db.query(DBUser).filter(DBUser.email.ilike(email)).first()
-                if db_user:
-                    return User(
-                        id=db_user.id,
-                        username=db_user.username,
-                        email=db_user.email,
-                        hashed_password=db_user.hashed_password,
-                        role=db_user.role,
-                        department=db_user.department,
-                        is_active=db_user.is_active,
-                    )
+                return UserRepository._to_domain(db_user) if db_user else None
             finally:
                 db.close()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.error("Database error in get_by_email: %s", exc)
+            if not _allow_mock_fallback():
+                return None
 
-        # Fallback to mock
         user_dict = next(
             (u for u in MOCK_USERS.values() if u["email"].lower() == email.lower()),
             None
         )
-        if not user_dict:
-            return None
-        return User(**user_dict)
+        return User(**user_dict) if user_dict else None
 
     @staticmethod
     def get_by_id(user_id: str) -> User | None:
@@ -103,29 +105,19 @@ class UserRepository:
             db = SessionLocal()
             try:
                 db_user = db.query(DBUser).filter(DBUser.id == user_id).first()
-                if db_user:
-                    return User(
-                        id=db_user.id,
-                        username=db_user.username,
-                        email=db_user.email,
-                        hashed_password=db_user.hashed_password,
-                        role=db_user.role,
-                        department=db_user.department,
-                        is_active=db_user.is_active,
-                    )
+                return UserRepository._to_domain(db_user) if db_user else None
             finally:
                 db.close()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.error("Database error in get_by_id: %s", exc)
+            if not _allow_mock_fallback():
+                return None
 
-        # Fallback to mock
         user_dict = next(
             (u for u in MOCK_USERS.values() if u["id"] == user_id),
             None
         )
-        if not user_dict:
-            return None
-        return User(**user_dict)
+        return User(**user_dict) if user_dict else None
 
     @staticmethod
     def list_users(search: str = None, role: str = None, department: str = None, page: int = 1, size: int = 10) -> tuple[list[User], int]:

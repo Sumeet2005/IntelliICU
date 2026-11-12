@@ -1,6 +1,14 @@
+import os
+import logging
 from app.models.role import Role, Permission
 from app.database.session import SessionLocal
 from app.database.models import DBRole, DBPermission
+
+logger = logging.getLogger(__name__)
+
+
+def _allow_mock_rbac_fallback() -> bool:
+    return os.getenv("ALLOW_MOCK_AUTH_FALLBACK", "false").strip().lower() in {"1", "true", "yes"}
 
 MOCK_PERMISSIONS = {
     "dashboard": Permission(id="perm-1", name="Dashboard", description="View dashboard stats and status"),
@@ -57,11 +65,8 @@ MOCK_ROLES = {
     )
 }
 
-from functools import lru_cache
-
 class RBACRepository:
     @staticmethod
-    @lru_cache(maxsize=32)
     def get_role_by_name(name: str) -> Role | None:
         try:
             db = SessionLocal()
@@ -74,12 +79,14 @@ class RBACRepository:
                         name=db_role.name,
                         permissions=perms
                     )
+                return None
             finally:
                 db.close()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.error("Database error in get_role_by_name: %s", exc)
+            if not _allow_mock_rbac_fallback():
+                return None
 
-        # Fallback to mock
         return MOCK_ROLES.get(name.lower())
 
     @staticmethod

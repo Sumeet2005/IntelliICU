@@ -1,13 +1,29 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { 
   User, Activity, AlertTriangle, AlertOctagon, CheckCircle2, BookOpen, 
-  ChevronDown, ChevronUp, Pill, FlaskConical, Bell, Gauge, Heart, FileText, Stethoscope 
+  ChevronDown, ChevronUp, Pill, FlaskConical, Gauge, Heart, FileText, Stethoscope 
 } from "lucide-react";
 import StreamingMarkdown from "./StreamingMarkdown";
 
 export default function ChatBubble({ message }) {
   const { sender, content, timestamp } = message;
   const isUser = sender === "user";
+
+  // Toggles for collapsible sections (always called unconditionally at top level)
+  const [showReasoning, setShowReasoning] = useState(true);
+  const [showRiskDrivers, setShowRiskDrivers] = useState(true);
+  const [showVitals, setShowVitals] = useState(true);
+  const [showLabs, setShowLabs] = useState(true);
+  const [showRecommendations, setShowRecommendations] = useState(true);
+  const [showEvidence, setShowEvidence] = useState(true);
+  const [showRAGEvidence, setShowRAGEvidence] = useState(true);
+  const [showCitations, setShowCitations] = useState(true);
+  const [showDifferential, setShowDifferential] = useState(true);
+  const [showTreatment, setShowTreatment] = useState(true);
+  const [showMedications, setShowMedications] = useState(true);
+  const [showRiskScores, setShowRiskScores] = useState(true);
+  const [showLabsInterpretation, setShowLabsInterpretation] = useState(true);
+  const [showTrends, setShowTrends] = useState(true);
 
   if (isUser) {
     return (
@@ -62,22 +78,6 @@ export default function ChatBubble({ message }) {
     answer, guideline, source, publication_year,
     retrieved_sources, differential_diagnosis, treatment_pathway, medication_plan, risk_scores, laboratory_interpretation, trend_analysis
   } = content || {};
-
-  // Toggles for collapsible sections
-  const [showReasoning, setShowReasoning] = useState(true);
-  const [showRiskDrivers, setShowRiskDrivers] = useState(true);
-  const [showVitals, setShowVitals] = useState(true);
-  const [showLabs, setShowLabs] = useState(true);
-  const [showRecommendations, setShowRecommendations] = useState(true);
-  const [showEvidence, setShowEvidence] = useState(true);
-  const [showRAGEvidence, setShowRAGEvidence] = useState(true);
-  const [showCitations, setShowCitations] = useState(true);
-  const [showDifferential, setShowDifferential] = useState(true);
-  const [showTreatment, setShowTreatment] = useState(true);
-  const [showMedications, setShowMedications] = useState(true);
-  const [showRiskScores, setShowRiskScores] = useState(true);
-  const [showLabsInterpretation, setShowLabsInterpretation] = useState(true);
-  const [showTrends, setShowTrends] = useState(true);
 
   // Helper to parse severity tags from string content
   const parseSeverity = (text) => {

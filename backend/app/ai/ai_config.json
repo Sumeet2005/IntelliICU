@@ -1,6 +1,8 @@
 {
-  "provider": "ollama",
-  "model": "mock-model",
+  "provider": "groq",
+  "fallback_provider": "gemini",
+  "enable_mock_fallback": false,
+  "model": "openai/gpt-oss-120b",
   "temperature": 0.2,
   "max_tokens": 1024,
   "streaming": true

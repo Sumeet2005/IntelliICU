@@ -58,11 +58,13 @@ class EmbeddingService:
                     logger.info(
                         "[EmbeddingService] Loading embedding model..."
                     )
-
+                    import os
+                    os.environ.setdefault("HF_HUB_OFFLINE", "1")
                     from sentence_transformers import SentenceTransformer
 
                     self._model = SentenceTransformer(
-                        self._model_name
+                        self._model_name,
+                        local_files_only=True
                     )
 
                     logger.info(

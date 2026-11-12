@@ -138,6 +138,8 @@ class ExplainabilityEngine:
             })
 
         return {
+            "explainability_method": "clinical_rules",
+            "disclaimer": "Deterministic clinical rule contributors (not SHAP TreeExplainer values).",
             "positive_contributors": positive_contributors,
-            "negative_contributors": negative_contributors
+            "negative_contributors": negative_contributors,
         }

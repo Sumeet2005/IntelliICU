@@ -164,10 +164,15 @@ class DocumentProcessor:
         
         tags_str = ",".join(tags) if tags else ""
 
+        if embedder._model is None and hasattr(embedder, "_get_model"):
+            embedder._get_model()
+        if embedder._model is None:
+            raise RuntimeError("Embedding model is unavailable (sentence-transformers failed to load).")
+
         for idx, chunk in enumerate(chunks):
             chunk_id = f"{filename.replace('.', '_')}_chunk_{idx}"
             chunk_ids.append(chunk_id)
-            
+
             # Metadata parallel to documents
             metadatas.append({
                 "title": title,
@@ -178,14 +183,14 @@ class DocumentProcessor:
                 "filename": filename,
                 "chunk_index": idx,
             })
-            
-            # Generate 384-dimensional vector embedding
-            emb = embedder._model.encode(
-                chunk,
-                normalize_embeddings=True,
-                convert_to_numpy=True
-            ).tolist()
-            embeddings.append(emb)
+
+        # Batch-encode all chunks at once for fast CPU/GPU throughput
+        embeddings = embedder._model.encode(
+            chunks,
+            batch_size=32,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+        ).tolist()
 
         # 4. Upsert into ChromaDB
         success = chroma_service.add_documents(

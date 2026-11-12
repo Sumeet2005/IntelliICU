@@ -56,6 +56,10 @@ class ClinicalReportGenerator:
         report_id = f"rep-{uuid.uuid4().hex[:8]}"
         created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        pred = context.get("prediction") or {}
+        risk_score_raw = pred.get("risk_score")
+        risk_level = pred.get("risk_level") or context.get("risk_level") or "LOW"
+
         report_content = {
             "demographics": context.get("patient") or {},
             "admission": context.get("admission") or {},
@@ -65,6 +69,9 @@ class ClinicalReportGenerator:
             "abnormal_labs": context.get("abnormal_labs") or [],
             "active_alerts": context.get("alerts") or [],
             "medications": context.get("medications") or [],
+            "prediction": pred,
+            "risk_score": risk_score_raw,
+            "risk_level": risk_level,
             "clinical_priority": context.get("clinical_priority") or "MEDIUM",
             "ai_reasoning": ai_reasoning,
             "clinical_recommendations": recommendations,
@@ -160,7 +167,21 @@ class ClinicalReportGenerator:
 
         p.setFont("Helvetica", 9)
         p.setFillColorRGB(*MUTED_TEXT)
-        p.drawString(40, height - 85, f"Date: {created_at} | Priority: {content.get('clinical_priority', 'MEDIUM')}")
+        
+        # Format Sepsis Risk for header
+        risk_score_val = content.get("risk_score")
+        risk_lvl = content.get("risk_level", "LOW")
+        if risk_score_val is not None:
+            try:
+                sc = float(risk_score_val)
+                pct = round(sc * 100 if sc <= 1.0 else sc)
+                risk_str = f"{pct}% ({risk_lvl})"
+            except (ValueError, TypeError):
+                risk_str = f"{risk_score_val} ({risk_lvl})"
+        else:
+            risk_str = str(risk_lvl)
+
+        p.drawString(40, height - 85, f"Date: {created_at} | Priority: {content.get('clinical_priority', 'MEDIUM')} | Sepsis Risk: {risk_str}")
 
         # Demographics Card
         y = height - 100
@@ -195,13 +216,14 @@ class ClinicalReportGenerator:
         y -= 20
         p.setFont("Helvetica-Bold", 11)
         p.setFillColorRGB(*PRIMARY_COLOR)
-        p.drawString(40, y, "PHYSIOLOGICAL VITAL TRENDS")
+        v = content.get("vitals") or {}
+        v_recorded = v.get("recorded_at") or "Current Telemetry"
+        p.drawString(40, y, f"PHYSIOLOGICAL VITAL TRENDS (Recorded: {v_recorded})")
         p.line(40, y - 4, width - 40, y - 4)
 
         y -= 20
         p.setFont("Helvetica", 9.5)
         p.setFillColorRGB(*TEXT_COLOR)
-        v = content.get("vitals") or {}
         trends = content.get("vital_trends") or {}
         
         v_lines = [
@@ -250,7 +272,7 @@ class ClinicalReportGenerator:
             y = height - 80
         p.setFont("Helvetica-Bold", 11)
         p.setFillColorRGB(*PRIMARY_COLOR)
-        p.drawString(40, y, "ACTIVE CLINICAL TELEMETRY ALARMS")
+        p.drawString(40, y, "ACTIVE CLINICAL TELEMETRY ALARMS (Awaiting Resolution)")
         p.line(40, y - 4, width - 40, y - 4)
 
         y -= 20
@@ -262,9 +284,12 @@ class ClinicalReportGenerator:
                     draw_page_template()
                     y = height - 80
                 p.setFont("Helvetica-Bold", 9.5)
-                p.drawString(50, y, f"[{alert['severity']}] {alert['title']}")
+                sev = alert.get("severity", "WARNING")
+                tit = alert.get("title", "Alert")
+                ts = alert.get("created_at") or "unspecified"
+                p.drawString(50, y, f"[{sev}] {tit} (Triggered: {ts})")
                 p.setFont("Helvetica", 9)
-                p.drawString(200, y, alert['message'])
+                p.drawString(240, y, str(alert.get("message", ""))[:65])
                 y -= 14
         else:
             p.setFont("Helvetica-Oblique", 9)

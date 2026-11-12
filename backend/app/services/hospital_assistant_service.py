@@ -27,7 +27,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Generator, List, Optional
 
-from app.ai.mock_llm import MockClinicalLLM
+from app.ai.factory import get_llm_provider
+from app.ai.providers.base import CLINICAL_SYSTEM_PROMPT
 from app.rag.knowledge_service import knowledge_service
 from app.telemetry.trend_engine import telemetry_engine
 
@@ -55,10 +56,14 @@ class HospitalAssistantService:
     """
 
     def __init__(self) -> None:
-        self.llm       = MockClinicalLLM()
         self.knowledge = knowledge_service
         # Conversation memory keyed by session ID ("hospital" for the default session).
         self._memory: Dict[str, List[Dict]] = {}
+
+    @property
+    def llm(self):
+        """Resolve the active LLM provider dynamically from runtime configuration."""
+        return get_llm_provider()
 
     # ==========================================================================
     # Patient data access — read from the already-running simulator singleton.
@@ -288,6 +293,7 @@ class HospitalAssistantService:
         ) or "  None"
 
         return (
+            f"{CLINICAL_SYSTEM_PROMPT}\n\n"
             "You are an enterprise-grade hospital-wide ICU AI Clinical Assistant. "
             "You have access to real-time data for all active ICU patients. "
             "Answer the clinical question with precision, citing specific patient data when relevant.\n\n"

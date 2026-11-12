@@ -8,10 +8,13 @@ Endpoint:
 """
 
 import asyncio
+import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.websocket.manager import manager
+from app.websocket.routes import _authenticate_ws
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -23,8 +26,10 @@ async def patient_websocket(
     """
     Individual Patient Live Stream
 
-    Each connected client receives live updates only for the requested patient.
+    Each authenticated, authorized client receives live updates only for the requested patient.
     """
+    if not await _authenticate_ws(websocket, "Patients"):
+        return
 
     await manager.connect_patient(patient_id, websocket)
 

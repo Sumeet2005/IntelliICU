@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity,
@@ -12,7 +12,6 @@ import {
   Brain,
   User,
   Calendar,
-  ShieldAlert,
   CheckCircle,
   Info as InfoIcon,
   X,
@@ -97,24 +96,24 @@ export default function PatientDrawer({ open, patientId, onClose }) {
     lastUpdated,
 } = usePatientStream(patientId);
 
-  useEffect(() => {
-    if (open && patientId) {
-      loadPatient();
-    }
-  }, [open, patientId]);
-
-  const loadPatient = async () => {
+  const loadPatient = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await patientService.getPatient(patientId);
       setProfile(data);
-    } catch (err) {
+    } catch {
       setError('Failed to load patient data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [patientId]);
+
+  useEffect(() => {
+    if (open && patientId) {
+      loadPatient();
+    }
+  }, [open, patientId, loadPatient]);
 
   const getTimelineIcon = (type) => {
     switch (type?.toLowerCase()) {

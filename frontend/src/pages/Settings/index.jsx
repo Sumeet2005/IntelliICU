@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bell, Database, Shield, Settings as SettingsIcon,
   Brain, RefreshCw, Save, Loader2, CheckCircle,
@@ -21,6 +22,7 @@ import { aiService } from "../../services/aiService";
 import { knowledgeService } from "../../services/knowledgeService";
 
 export default function Settings() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("ai");
 
   // AI Configuration state
@@ -748,17 +750,23 @@ export default function Settings() {
                 {
                   icon: Bell,
                   title: "Alert Preferences",
-                  description: "Configure critical alert thresholds and notification channels.",
+                  description: "View live ICU alert thresholds and monitoring stream configuration.",
+                  actionLabel: "Open Live Monitoring",
+                  onClick: () => navigate("/monitoring"),
                 },
                 {
                   icon: Database,
                   title: "Knowledge Base",
                   description: "Manage RAG document sources and clinical guideline indexing.",
+                  actionLabel: "Manage Knowledge Base",
+                  onClick: () => setActiveTab("kb"),
                 },
                 {
                   icon: Shield,
                   title: "Security & Compliance",
-                  description: "HIPAA audit logs, role-based access, and session policies.",
+                  description: "Manage role-based access, user accounts, and security policies.",
+                  actionLabel: "Open User Management",
+                  onClick: () => navigate("/users"),
                 },
               ].map((section) => {
                 const Icon = section.icon;
@@ -769,8 +777,12 @@ export default function Settings() {
                       <h2 className="mt-4 text-base font-bold text-slate-800">{section.title}</h2>
                       <p className="mt-2 text-xs leading-relaxed text-slate-500">{section.description}</p>
                     </div>
-                    <button type="button" className="mt-6 rounded-xl bg-slate-900 px-5 py-3 text-xs font-bold text-white hover:bg-slate-800 transition cursor-pointer">
-                      Configure
+                    <button
+                      type="button"
+                      onClick={section.onClick}
+                      className="mt-6 rounded-xl bg-slate-900 px-5 py-3 text-xs font-bold text-white hover:bg-slate-800 transition cursor-pointer"
+                    >
+                      {section.actionLabel}
                     </button>
                   </div>
                 );

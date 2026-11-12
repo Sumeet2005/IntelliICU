@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.ai.predictor import Predictor
+from app.core.dependencies.rbac import require_permission
 from app.database.session import SessionLocal
 from app.repositories.lab_result_repository import LabResultRepository
 from app.repositories.prediction_repository import PredictionRepository
@@ -19,6 +20,7 @@ from app.services.prediction_service import PredictionService
 router = APIRouter(
     prefix="/predictions",
     tags=["AI Predictions"],
+    dependencies=[Depends(require_permission("ClinicalAI"))],
 )
 
 

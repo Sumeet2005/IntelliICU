@@ -5,6 +5,7 @@ Admission API Endpoints.
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.core.dependencies.rbac import require_permission
 from app.database.session import SessionLocal
 from app.repositories.admission_repository import AdmissionRepository
 from app.schemas.admission import (
@@ -14,7 +15,11 @@ from app.schemas.admission import (
 )
 from app.services.admission_service import AdmissionService
 
-router = APIRouter(prefix="/admissions", tags=["Admissions"])
+router = APIRouter(
+    prefix="/admissions",
+    tags=["Admissions"],
+    dependencies=[Depends(require_permission("Patients"))],
+)
 
 
 def get_db():

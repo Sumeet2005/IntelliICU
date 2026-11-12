@@ -37,7 +37,14 @@ jobs:
         run: pip install -r backend/requirements.txt
 
       - name: Run Python Compile Check
-        run: python -m py_compile backend/app/main.py
+        run: python -m compileall -q backend/app
+
+      - name: Run Backend Unit & Security Tests
+        working-directory: backend
+        env:
+          DISABLE_SIMULATOR: "true"
+          ENABLE_DEMO_SEED: "false"
+        run: python -m unittest discover -s tests -v
 
   # ============================================================
   # Frontend CI
@@ -65,6 +72,10 @@ jobs:
         working-directory: frontend
         run: |
           npm install --no-save @rolldown/binding-linux-x64-gnu lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu
+
+      - name: Run Frontend ESLint
+        working-directory: frontend
+        run: npm run lint
 
       - name: Run Vite Production Build
         working-directory: frontend

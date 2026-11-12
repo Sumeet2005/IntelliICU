@@ -7,13 +7,13 @@ from app.models.user import User
 # Using auth login endpoint as token url path
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+async def get_current_user_from_token(token: str | None) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     if not token:
         raise credentials_exception
 
@@ -21,7 +21,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         payload = AuthService.decode_token(token)
         username: str = payload.get("sub")
         token_type: str = payload.get("type")
-        
+
         # Enforce that current user dependency requires access tokens only
         if username is None or token_type != "access":
             raise credentials_exception
@@ -29,6 +29,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         raise credentials_exception
 
     user = UserRepository.get_by_username(username)
-    if user is None:
+    if user is None or not user.is_active:
         raise credentials_exception
     return user
+
+
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+    return await get_current_user_from_token(token)

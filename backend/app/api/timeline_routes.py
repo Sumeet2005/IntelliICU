@@ -1,17 +1,21 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse, Response
 import io
 import asyncio
 
+from app.core.dependencies.auth import get_current_user
+from app.core.dependencies.rbac import require_permission
+from app.models.user import User
 from app.services.timeline_engine import timeline_engine
 from app.websocket.simulator import simulator
 
 router = APIRouter(
     prefix="/timeline",
     tags=["Clinical Timeline"],
+    dependencies=[Depends(get_current_user)],
 )
 
-@router.get("/{patient_id}")
+@router.get("/{patient_id}", dependencies=[Depends(require_permission("Timeline"))])
 async def get_timeline(
     patient_id: str,
     event_type: str = Query(None, alias="type"),
@@ -29,10 +33,11 @@ async def get_timeline(
     events = await asyncio.to_thread(timeline_engine.get_patient_timeline, patient_id, event_type, search)
     return events
 
-@router.post("/{patient_id}")
+@router.post("/{patient_id}", dependencies=[Depends(require_permission("Timeline"))])
 async def log_event(
     patient_id: str,
-    payload: dict
+    payload: dict,
+    current_user: User = Depends(get_current_user),
 ):
     """
     Log a new timeline event for a patient.
@@ -47,12 +52,12 @@ async def log_event(
         event_type=payload.get("type", "User"),
         title=payload.get("title", "Clinical Action"),
         description=payload.get("description", ""),
-        actor=payload.get("actor", "System"),
+        actor=payload.get("actor") or current_user.username,
         metadata=payload.get("metadata", {})
     )
     return event
 
-@router.get("/{patient_id}/export")
+@router.get("/{patient_id}/export", dependencies=[Depends(require_permission("Reports"))])
 async def export_timeline(
     patient_id: str,
     format: str = Query("json"),

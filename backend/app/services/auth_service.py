@@ -27,7 +27,7 @@ class AuthService:
         if not user:
             user = UserRepository.get_by_email(username)
             
-        if not user:
+        if not user or not user.is_active:
             return None
         if not cls.verify_password(password, user.hashed_password):
             return None

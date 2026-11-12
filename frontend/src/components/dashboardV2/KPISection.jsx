@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   BedDouble,
   BrainCircuit,
-  ArrowUpRight,
 } from "lucide-react";
 
 import { dashboardService } from "../../services/dashboardService";
@@ -17,33 +16,31 @@ export default function KPISection() {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // NEW
   const { dashboardData } = useWebSocket();
   const { alertCount } = useClinicalAI();
 
   useEffect(() => {
+    let active = true;
+    async function loadDashboard() {
+      try {
+        const data = await dashboardService.getDashboard();
+        if (active) setDashboard(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
     loadDashboard();
+    return () => {
+      active = false;
+    };
   }, []);
 
-  useEffect(() => {
-    if (dashboardData) {
-      setDashboard(dashboardData);
-      setLoading(false);
-    }
-  }, [dashboardData]);
+  const effectiveDashboard = dashboardData || dashboard;
+  const effectiveLoading = loading && !dashboardData;
 
-  async function loadDashboard() {
-    try {
-      const data = await dashboardService.getDashboard();
-      setDashboard(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loading || !dashboard) {
+  if (effectiveLoading || !effectiveDashboard) {
     return (
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
@@ -59,25 +56,25 @@ export default function KPISection() {
   const cards = [
     {
       title: "Patients",
-      value: dashboard.total_patients,
+      value: effectiveDashboard.total_patients,
       icon: Users,
       color: "from-cyan-500 to-blue-600",
     },
     {
       title: "Critical",
-      value: dashboard.critical_patients,
+      value: effectiveDashboard.critical_patients,
       icon: AlertTriangle,
       color: "from-red-500 to-red-700",
     },
     {
       title: "Occupancy",
-      value: `${dashboard.bed_occupancy}%`,
+      value: `${effectiveDashboard.bed_occupancy}%`,
       icon: BedDouble,
       color: "from-green-500 to-emerald-600",
     },
     {
       title: "AI Alerts",
-      value: alertCount ?? dashboard.active_alerts,
+      value: alertCount ?? effectiveDashboard.active_alerts,
       icon: BrainCircuit,
       color: "from-violet-500 to-indigo-600",
     },

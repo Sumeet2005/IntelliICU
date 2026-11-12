@@ -4,9 +4,19 @@ IntelliICU Main Application
 
 import asyncio
 import os
+from pathlib import Path
 from contextlib import asynccontextmanager
 from datetime import datetime
 import logging
+
+try:
+    from dotenv import load_dotenv
+
+    _root_env = Path(__file__).resolve().parents[2] / ".env"
+    if _root_env.exists():
+        load_dotenv(_root_env, override=False)
+except ImportError:
+    pass
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -49,10 +59,9 @@ from app.websocket.simulator import simulator
 # Application Lifespan
 # =====================================================
 
+from app.core.logging import configure_logging
 from app.database.session import check_db_connectivity
 from app.database.seeder import seed_database_if_empty
-from app.database.base import Base
-from app.database.session import engine
 
 logger = logging.getLogger("app.main")
 
@@ -60,48 +69,42 @@ logger = logging.getLogger("app.main")
 async def lifespan(app: FastAPI):
     """
     Application startup / shutdown sequence.
-    Startup order: Configuration loaded -> DB validation -> Create tables -> Seed -> Init AI -> Simulator start -> Expose API.
     """
-    print("=" * 60)
-    print("STARTING: IntelliICU Initialization Sequence...")
-    print("=" * 60)
+    configure_logging()
+    logger.info("STARTING: IntelliICU Initialization Sequence...")
 
     # 1. Database connection & validation
     db_ok = check_db_connectivity()
     if db_ok:
-        # 2. Create tables
-        print("DATABASE: Creating schema tables...")
-        Base.metadata.create_all(bind=engine)
-
-        # 3. Seed database
-        print("DATABASE: Running seeders...")
+        # 2. Explicit, non-destructive demo seeding (only runs when ENABLE_DEMO_SEED=true)
         seed_database_if_empty()
     else:
-        print("DATABASE: Connection failed. Booting in degraded/mock mode.")
+        logger.warning("DATABASE: Connection failed during startup.")
 
-    # 4. Initialize AI providers configurations
+    # 3. Initialize AI providers configurations
     try:
         from app.ai.factory import get_llm_provider
         provider = get_llm_provider()
-        print(f"AI: Initialized provider: {provider.__class__.__name__}")
+        logger.info("AI: Initialized provider: %s", provider.__class__.__name__)
     except Exception as e:
-        print(f"AI: Provider initialization warning: {e}")
+        logger.warning("AI: Provider initialization warning: %s", e)
 
-    # 5. Initialize & start simulator
-    print("SIMULATOR: Starting real-time telemetry simulator...")
-    asyncio.create_task(simulator.start())
+    # 4. Initialize & start simulator (unless DISABLE_SIMULATOR=true)
+    sim_task = None
+    if os.getenv("DISABLE_SIMULATOR", "false").strip().lower() not in {"1", "true", "yes"}:
+        logger.info("SIMULATOR: Starting real-time telemetry simulator...")
+        sim_task = asyncio.create_task(simulator.start())
 
-    # 6. Expose API
+    # 5. Expose API
     app.state.startup_complete = True
-    print("=" * 60)
-    print("STARTUP COMPLETE: IntelliICU API is now accepting traffic.")
-    print("=" * 60)
+    logger.info("STARTUP COMPLETE: IntelliICU API is now accepting traffic.")
 
     yield
 
-    print("=" * 60)
-    print("SHUTDOWN: IntelliICU Shutdown")
-    print("=" * 60)
+    simulator.stop()
+    if sim_task and not sim_task.done():
+        sim_task.cancel()
+    logger.info("SHUTDOWN: IntelliICU Shutdown")
 
 
 # =====================================================
@@ -282,7 +285,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.get("/health")
 @app.get("/ready")
 @app.get("/live")
-async def health_check():
+async def health_check(request: Request):
     db_ok = await asyncio.to_thread(check_db_connectivity)
     
     # 1. Check AI Provider
@@ -313,8 +316,7 @@ async def health_check():
         pass
 
     overall_status = "healthy" if (db_ok and ai_ok and sim_ok and telemetry_ok) else "degraded"
-
-    return {
+    payload = {
         "status": overall_status,
         "database": "connected" if db_ok else "disconnected",
         "ai_provider": {
@@ -325,6 +327,9 @@ async def health_check():
         "telemetry_engine": "online" if telemetry_ok else "offline",
         "timestamp": datetime.utcnow().isoformat()
     }
+    if request.url.path == "/ready" and not db_ok:
+        return JSONResponse(status_code=503, content=payload)
+    return payload
 
 @app.get("/")
 async def root():

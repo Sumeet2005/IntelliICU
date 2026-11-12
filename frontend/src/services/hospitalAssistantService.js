@@ -70,6 +70,7 @@ export const hospitalAssistantService = {
     const reader  = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
     let buffer    = "";
+    let receivedFinal = false;
 
     try {
       while (true) {
@@ -77,20 +78,34 @@ export const hospitalAssistantService = {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
+        const lines = buffer.split(/\r?\n/);
         buffer = lines.pop() || "";
 
         for (const line of lines) {
           const trimmed = line.trim();
-          if (!trimmed.startsWith("data: ")) continue;
+          if (!trimmed.startsWith("data:")) continue;
+          const payloadStr = trimmed.slice(5).trim();
+          if (!payloadStr || payloadStr === "[DONE]") continue;
+          let data = null;
           try {
-            const data = JSON.parse(trimmed.substring(6));
-            if (data.type === "token")  onToken(data.content);
-            if (data.type === "final")  onFinal(data.content);
+            data = JSON.parse(payloadStr);
           } catch {
             // Silently skip malformed chunks
+            continue;
+          }
+          if (data?.type === "token") onToken(data.content);
+          if (data?.type === "final") {
+            receivedFinal = true;
+            onFinal(data.content);
+          }
+          if (data?.type === "error") {
+            throw new Error(data.error || "Hospital Assistant provider unavailable.");
           }
         }
+      }
+
+      if (!receivedFinal) {
+        throw new Error("Hospital Assistant stream closed before completion.");
       }
     } finally {
       reader.releaseLock();

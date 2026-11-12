@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import logging
+import time
+from collections import defaultdict
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from app.schemas.auth import LoginRequest, TokenResponse, UserResponse, RefreshRequest
 from app.services.auth_service import AuthService
 from app.repositories.user_repository import UserRepository
@@ -8,6 +11,25 @@ from app.models.user import User
 from app.schemas.user_management import UserCreate
 from app.database.session import SessionLocal
 from app.database.models import DBUser
+
+logger = logging.getLogger(__name__)
+_login_attempts: dict[str, list[float]] = defaultdict(list)
+_RATE_WINDOW_SEC = 60
+_RATE_MAX_ATTEMPTS = 20
+
+
+def _check_rate_limit(request: Request) -> None:
+    ip = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    recent = [t for t in _login_attempts[ip] if now - t < _RATE_WINDOW_SEC]
+    if len(recent) >= _RATE_MAX_ATTEMPTS:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many authentication attempts. Please try again later.",
+        )
+    recent.append(now)
+    _login_attempts[ip] = recent
+
 
 router = APIRouter(
     prefix="/auth",
@@ -51,13 +73,16 @@ async def bootstrap_first_admin(payload: UserCreate):
         db.close()
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: LoginRequest):
+async def login(payload: LoginRequest, request: Request):
+    _check_rate_limit(request)
     user = AuthService.authenticate_user(payload.username, payload.password)
     if not user:
+        logger.warning("[AUDIT] Failed login attempt for username=%s", payload.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
+    logger.info("[AUDIT] Successful login for username=%s role=%s", user.username, user.role)
     
     access_token = AuthService.create_access_token(data={"sub": user.username, "role": user.role})
     refresh_token = AuthService.create_refresh_token(data={"sub": user.username})

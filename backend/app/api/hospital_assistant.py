@@ -14,17 +14,18 @@ Endpoints:
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.core.dependencies.auth import get_current_user
+from app.ai.providers.exceptions import LLMUnavailableError
+from app.core.dependencies.rbac import require_permission
 from app.services.hospital_assistant_service import hospital_assistant
 
 router = APIRouter(
     prefix="/hospital-assistant",
     tags=["Hospital Assistant"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(require_permission("ClinicalAI"))],
 )
 
 
@@ -110,7 +111,10 @@ def chat(request: HospitalChatRequest, stream: bool = False):
             session_id=request.session_id,
         )
         return StreamingResponse(gen, media_type="text/event-stream")
-    return hospital_assistant.ask(
-        question=request.question,
-        session_id=request.session_id,
-    )
+    try:
+        return hospital_assistant.ask(
+            question=request.question,
+            session_id=request.session_id,
+        )
+    except LLMUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=exc.sanitized_message)

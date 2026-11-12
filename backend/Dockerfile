@@ -1,30 +1,30 @@
+
 FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
 COPY requirements.txt .
 
-# Install CPU-only PyTorch first to prevent installing >2.5GB CUDA GPU packages
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir \
+    --index-url https://pypi.org/simple \
+    filelock typing-extensions setuptools sympy networkx jinja2 fsspec
 
-# Install remaining dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --no-deps \
+    torch --index-url https://download.pytorch.org/whl/cpu
 
-# Copy code
+RUN pip install --no-cache-dir \
+    --index-url https://pypi.org/simple \
+    -r requirements.txt
+
 COPY . .
 
-# Grant execute rights to startup script
 RUN chmod +x start.sh
 
-# DockHosting / container port
 EXPOSE 8080
 
-# Run startup script
 CMD ["./start.sh"]

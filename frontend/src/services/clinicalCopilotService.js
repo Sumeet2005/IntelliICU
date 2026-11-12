@@ -62,6 +62,7 @@ export const clinicalCopilotService = {
     const decoder = new TextDecoder("utf-8");
 
     let buffer = "";
+    let receivedFinal = false;
 
     try {
       while (true) {
@@ -75,7 +76,7 @@ export const clinicalCopilotService = {
           stream: true,
         });
 
-        const lines = buffer.split("\n");
+        const lines = buffer.split(/\r?\n/);
 
         // Preserve incomplete SSE line for next chunk
         buffer = lines.pop() || "";
@@ -83,28 +84,40 @@ export const clinicalCopilotService = {
         for (const line of lines) {
           const trimmed = line.trim();
 
-          if (!trimmed.startsWith("data: ")) {
+          if (!trimmed.startsWith("data:")) {
             continue;
           }
 
-          try {
-            const data = JSON.parse(
-              trimmed.substring(6)
-            );
+          const payloadStr = trimmed.slice(5).trim();
+          if (!payloadStr || payloadStr === "[DONE]") {
+            continue;
+          }
 
-            if (data.type === "token") {
-              onToken?.(data.content);
-            } else if (data.type === "final") {
-              onFinal?.(data.content);
-            }
+          let data = null;
+          try {
+            data = JSON.parse(payloadStr);
           } catch (error) {
             console.warn(
               "Failed to parse SSE JSON chunk:",
               trimmed,
               error
             );
+            continue;
+          }
+
+          if (data?.type === "token") {
+            onToken?.(data.content);
+          } else if (data?.type === "final") {
+            receivedFinal = true;
+            onFinal?.(data.content);
+          } else if (data?.type === "error") {
+            throw new Error(data.error || "Clinical AI provider unavailable.");
           }
         }
+      }
+
+      if (!receivedFinal) {
+        throw new Error("Clinical Copilot stream closed before completion.");
       }
     } finally {
       reader.releaseLock();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2, AlertCircle, Download, FileText, Database } from "lucide-react";
 
@@ -95,11 +95,7 @@ export default function PatientProfile() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview"); // overview, timeline, evidence, explainability, reports
 
-  useEffect(() => {
-    loadPatient();
-  }, [patientId]);
-
-  async function loadPatient() {
+  const loadPatient = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -120,7 +116,11 @@ export default function PatientProfile() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [patientId, setSelectedPatient]);
+
+  useEffect(() => {
+    loadPatient();
+  }, [loadPatient]);
 
   if (loading) {
     return (

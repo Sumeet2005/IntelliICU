@@ -3,6 +3,7 @@ Live ICU Data Simulator
 """
 
 import asyncio
+import os
 import random
 from datetime import datetime
 
@@ -213,14 +214,22 @@ class ICUSimulator:
         self.last_vitals_log = {}
         self.last_db_sync = None
         self.admission_cache = {}
+        self._running = False
+        self.interval_seconds = float(os.getenv("SIMULATOR_INTERVAL_SECONDS", "2.0"))
+        self.persist_to_db = os.getenv("SIMULATOR_PERSIST_DB", "false").strip().lower() in {"1", "true", "yes"}
+
+    def stop(self):
+        self._running = False
 
     async def start(self):
-
+        if self._running:
+            return
+        self._running = True
         print("=" * 60)
-        print("SIMULATOR: ICU Live Simulator Started")
+        print("SIMULATOR: ICU Live Simulator Started (synthetic_telemetry=True)")
         print("=" * 60)
 
-        while True:
+        while self._running:
 
             self._update_dashboard()
             self._update_patients()
@@ -269,13 +278,14 @@ class ICUSimulator:
                     patient["id"],
                     {
                         "type": "patient_update",
+                        "synthetic": True,
                         "timestamp": timestamp,
                         "data": patient,
                         "telemetry_trends": patient["telemetry_trends"],
                     }
                 )
 
-            await asyncio.sleep(2)
+            await asyncio.sleep(self.interval_seconds)
 
     def _update_dashboard(self):
 
@@ -474,9 +484,11 @@ class ICUSimulator:
 
     def _sync_patients_to_db_blocking(self, patients_data):
         """
-        Synchronizes patient states and inserts vitals in a single DB session.
-        Runs in a background thread to prevent event loop starvation.
+        Synchronizes patient states and inserts vitals in a single DB session
+        only when SIMULATOR_PERSIST_DB=true (disabled by default to prevent unbounded growth).
         """
+        if not self.persist_to_db:
+            return
         try:
             db = SessionLocal()
             try:

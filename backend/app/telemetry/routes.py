@@ -15,14 +15,16 @@ No database access.  No heavy computation on the request path.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.core.dependencies.rbac import require_permission
 from app.telemetry.trend_engine import telemetry_engine
 from app.telemetry.store import TRACKED_PARAMETERS, PARAMETER_META
 
 router = APIRouter(
     prefix="/telemetry",
     tags=["Telemetry"],
+    dependencies=[Depends(require_permission("Patients"))],
 )
 
 

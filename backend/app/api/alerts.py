@@ -5,6 +5,7 @@ Enterprise Alert API
 from fastapi import APIRouter, HTTPException, Depends
 from app.models.user import User
 from app.core.dependencies.auth import get_current_user
+from app.core.dependencies.rbac import require_permission
 from app.alerts.manager import manager as alert_manager
 
 router = APIRouter(
@@ -26,7 +27,7 @@ async def get_alerts():
     ]
 
 
-@router.post("/acknowledge/{alert_id}")
+@router.post("/acknowledge/{alert_id}", dependencies=[Depends(require_permission("Alerts"))])
 async def acknowledge(alert_id: str):
     """
     Acknowledge an alert.
@@ -56,7 +57,7 @@ async def acknowledge(alert_id: str):
     }
 
 
-@router.post("/resolve/{alert_id}")
+@router.post("/resolve/{alert_id}", dependencies=[Depends(require_permission("Alerts"))])
 async def resolve(alert_id: str):
     """
     Resolve an alert.
@@ -86,7 +87,7 @@ async def resolve(alert_id: str):
     }
 
 
-@router.post("/escalate/{alert_id}")
+@router.post("/escalate/{alert_id}", dependencies=[Depends(require_permission("Alerts"))])
 async def escalate(alert_id: str):
     """
     Escalate an alert.

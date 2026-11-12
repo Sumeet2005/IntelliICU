@@ -21,6 +21,7 @@ from typing import Dict, Any, Generator, List, Tuple
 from app.services.context_builder import PatientContextBuilder
 from app.services.context_optimizer import ContextOptimizer
 from app.ai.factory import get_llm_provider
+from app.ai.providers.base import CLINICAL_SYSTEM_PROMPT
 from app.rag.knowledge_service import knowledge_service
 from app.clinical_reasoning.differential_engine import DifferentialEngine
 from app.clinical_reasoning.treatment_engine import TreatmentEngine
@@ -47,12 +48,6 @@ class ClinicalCopilotService:
 
     def __init__(self):
         self.context_builder = PatientContextBuilder()
-        try:
-            self.llm = get_llm_provider()
-        except Exception as err:
-            logger.warning(f"Failed to initialize LLM provider via factory ({err}), using MockClinicalLLM.")
-            from app.ai.mock_llm import MockClinicalLLM
-            self.llm = MockClinicalLLM()
         self.knowledge       = knowledge_service
 
         # Configuration
@@ -61,6 +56,11 @@ class ClinicalCopilotService:
         # In-memory session caches
         self.context_cache      = {}   # patient_id -> {"optimized": dict, "checksum": tuple}
         self.conversation_memory = {}  # patient_id -> list[message turns]
+
+    @property
+    def llm(self):
+        """Resolve active LLM provider dynamically so runtime /api/ai/config updates take effect."""
+        return get_llm_provider()
 
     # ------------------------------------------------------------------
     # Telemetry checksum
@@ -182,10 +182,9 @@ class ClinicalCopilotService:
         # ── 2. Evidence retrieval ────────────────────────────────────────
         evidence_text, retrieved_sources, evidence_used = self._build_evidence_block(question)
 
-        # ── 3. System message ────────────────────────────────────────────
+        # ── 3. System message (always refresh so latest RAG evidence reaches LLM) ──
         system_instruction = (
-            "You are an expert ICU Clinical Decision Support AI. "
-            "Analyze the provided patient context and answer the clinical question.\n"
+            f"{CLINICAL_SYSTEM_PROMPT}\n\n"
             f"Patient Context Summary:\n{json.dumps(optimized_context, indent=2)}"
             + evidence_text
         )
@@ -196,11 +195,9 @@ class ClinicalCopilotService:
                 {"role": "system", "content": system_instruction}
             ]
         else:
-            if cache_status == "MISS":
-                # Sync system message when context has changed
-                self.conversation_memory[patient_id][0] = {
-                    "role": "system", "content": system_instruction
-                }
+            self.conversation_memory[patient_id][0] = {
+                "role": "system", "content": system_instruction
+            }
 
         self.conversation_memory[patient_id].append(
             {"role": "user", "content": question}
@@ -271,7 +268,12 @@ class ClinicalCopilotService:
             patient_id, question
         )
 
-        response = self.llm.generate_response(question, llm_context)
+        try:
+            response = self.llm.generate_response(question, llm_context)
+        except Exception:
+            if self.conversation_memory.get(patient_id) and self.conversation_memory[patient_id][-1].get("role") == "user":
+                self.conversation_memory[patient_id].pop()
+            raise
         response["context"]           = context
         response["retrieved_sources"] = retrieved_sources
         response["evidence_used"]     = evidence_used
@@ -351,68 +353,78 @@ class ClinicalCopilotService:
             patient_id, question
         )
 
-        for chunk in self.llm.generate_stream(question, llm_context):
-            if chunk["type"] == "final":
-                chunk["content"]["context"]           = context
-                chunk["content"]["retrieved_sources"] = retrieved_sources
-                chunk["content"]["evidence_used"]     = evidence_used
+        try:
+            for chunk in self.llm.generate_stream(question, llm_context):
+                if chunk.get("type") == "error":
+                    if self.conversation_memory.get(patient_id) and self.conversation_memory[patient_id][-1].get("role") == "user":
+                        self.conversation_memory[patient_id].pop()
+                    yield f"data: {json.dumps(chunk)}\n\n"
+                    return
+                if chunk["type"] == "final":
+                    chunk["content"]["context"]           = context
+                    chunk["content"]["retrieved_sources"] = retrieved_sources
+                    chunk["content"]["evidence_used"]     = evidence_used
 
-                # Run differential diagnosis engine
-                abnormal_vitals, abnormal_labs = self._extract_abnormalities(context)
-                admission = context.get("admission", {}) or {}
-                diagnosis = admission.get("diagnosis", "")
-                chunk["content"]["differential_diagnosis"] = DifferentialEngine.evaluate(
-                    context=context,
-                    abnormal_vitals=abnormal_vitals,
-                    abnormal_labs=abnormal_labs,
-                    admission_diagnosis=diagnosis,
-                    retrieved_sources=retrieved_sources
-                )
+                    # Run differential diagnosis engine
+                    abnormal_vitals, abnormal_labs = self._extract_abnormalities(context)
+                    admission = context.get("admission", {}) or {}
+                    diagnosis = admission.get("diagnosis", "")
+                    chunk["content"]["differential_diagnosis"] = DifferentialEngine.evaluate(
+                        context=context,
+                        abnormal_vitals=abnormal_vitals,
+                        abnormal_labs=abnormal_labs,
+                        admission_diagnosis=diagnosis,
+                        retrieved_sources=retrieved_sources
+                    )
 
-                # Run treatment pathway engine
-                vitals = context.get("vitals", {}) or {}
-                labs = context.get("labs", {}) or {}
-                chunk["content"]["treatment_pathway"] = TreatmentEngine.generate(
-                    differential_diagnosis=chunk["content"]["differential_diagnosis"],
-                    context=context,
-                    vitals=vitals,
-                    labs=labs,
-                    retrieved_sources=retrieved_sources
-                )
+                    # Run treatment pathway engine
+                    vitals = context.get("vitals", {}) or {}
+                    labs = context.get("labs", {}) or {}
+                    chunk["content"]["treatment_pathway"] = TreatmentEngine.generate(
+                        differential_diagnosis=chunk["content"]["differential_diagnosis"],
+                        context=context,
+                        vitals=vitals,
+                        labs=labs,
+                        retrieved_sources=retrieved_sources
+                    )
 
-                # Run medication recommendation engine
-                chunk["content"]["medication_plan"] = MedicationEngine.generate(
-                    treatment_pathway=chunk["content"]["treatment_pathway"],
-                    differential_diagnosis=chunk["content"]["differential_diagnosis"],
-                    context=context,
-                    vitals=vitals,
-                    labs=labs,
-                    drug_rag_results=retrieved_sources
-                )
+                    # Run medication recommendation engine
+                    chunk["content"]["medication_plan"] = MedicationEngine.generate(
+                        treatment_pathway=chunk["content"]["treatment_pathway"],
+                        differential_diagnosis=chunk["content"]["differential_diagnosis"],
+                        context=context,
+                        vitals=vitals,
+                        labs=labs,
+                        drug_rag_results=retrieved_sources
+                    )
 
-                # Run clinical risk score engine
-                gcs_val = context.get("patient", {}).get("gcs") or context.get("labs", {}).get("gcs") or 15
-                chunk["content"]["risk_scores"] = RiskScoreEngine.calculate(
-                    vitals=vitals,
-                    labs=labs,
-                    gcs=gcs_val,
-                    context=context
-                )
+                    # Run clinical risk score engine
+                    gcs_val = context.get("patient", {}).get("gcs") or context.get("labs", {}).get("gcs") or 15
+                    chunk["content"]["risk_scores"] = RiskScoreEngine.calculate(
+                        vitals=vitals,
+                        labs=labs,
+                        gcs=gcs_val,
+                        context=context
+                    )
 
-                # Run laboratory interpretation engine
-                chunk["content"]["laboratory_interpretation"] = LaboratoryEngine.generate(
-                    context=context
-                )
+                    # Run laboratory interpretation engine
+                    chunk["content"]["laboratory_interpretation"] = LaboratoryEngine.generate(
+                        context=context
+                    )
 
-                # Run clinical trend engine
-                chunk["content"]["trend_analysis"] = TrendEngine.generate(
-                    context=context
-                )
+                    # Run clinical trend engine
+                    chunk["content"]["trend_analysis"] = TrendEngine.generate(
+                        context=context
+                    )
 
-                # Record assistant turn for follow-up memory
-                self.conversation_memory[patient_id].append({
-                    "role":    "assistant",
-                    "content": chunk["content"].get("reasoning", ""),
-                })
+                    # Record assistant turn for follow-up memory
+                    self.conversation_memory[patient_id].append({
+                        "role":    "assistant",
+                        "content": chunk["content"].get("reasoning", ""),
+                    })
 
-            yield f"data: {json.dumps(chunk)}\n\n"
+                yield f"data: {json.dumps(chunk)}\n\n"
+        except Exception as exc:
+            if self.conversation_memory.get(patient_id) and self.conversation_memory[patient_id][-1].get("role") == "user":
+                self.conversation_memory[patient_id].pop()
+            yield f"data: {json.dumps({'type': 'error', 'error': str(exc)})}\n\n"

@@ -27,7 +27,11 @@ class OllamaLLMProvider(BaseLLMProvider):
     """
 
     def __init__(self) -> None:
-        self.host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+        self.host = (
+            os.getenv("OLLAMA_HOST")
+            or os.getenv("OLLAMA_BASE_URL")
+            or "http://localhost:11434"
+        ).rstrip("/")
         self.mock_fallback = MockLLMProvider()
 
     def generate(self, question: str, context: Dict[str, Any]) -> Dict[str, Any]:

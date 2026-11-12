@@ -256,23 +256,16 @@ export default function HospitalAssistant() {
         (final) => {
           const reasoning = final?.reasoning || final?.answer || "Analysis complete.";
           setMessages((prev) => [...prev, { role: "assistant", content: reasoning }]);
-          setStreamingText("");
           setPendingFinal(final);
-          setStreaming(false);
         },
       );
     } catch (err) {
-      // Fallback: try batch
-      try {
-        const res = await hospitalAssistantService.chat(q);
-        const text = res?.reasoning || res?.answer || "Analysis complete.";
-        setMessages((prev) => [...prev, { role: "assistant", content: text }]);
-      } catch {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: "Unable to process request. Please try again." },
-        ]);
-      }
+      const errMsg = err?.message || "Hospital Assistant provider is currently unavailable.";
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: `⚠️ ${errMsg}` },
+      ]);
+    } finally {
       setStreamingText("");
       setStreaming(false);
     }

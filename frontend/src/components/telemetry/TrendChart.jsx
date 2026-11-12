@@ -56,6 +56,10 @@ function CustomTooltip({ active, payload }) {
 }
 
 export default function TrendChart({ trend, patientName = "" }) {
+  const history = trend?.history;
+  // Use the last 30 history points for the chart (unconditional hook call)
+  const chartData = useMemo(() => (history || []).slice(-30), [history]);
+
   if (!trend) {
     return (
       <div className="clinical-card p-6 flex items-center justify-center h-64 text-slate-400 text-xs font-bold">
@@ -70,8 +74,6 @@ export default function TrendChart({ trend, patientName = "" }) {
     current,
     previous,
     average,
-    minimum,
-    maximum,
     std_dev,
     slope,
     pct_change,
@@ -81,11 +83,9 @@ export default function TrendChart({ trend, patientName = "" }) {
     interpretation,
     possible_causes,
     normal_range,
-    history = [],
     sample_count,
     time_window_seconds,
     confidence,
-    deterioration_score,
   } = trend;
 
   const alertLevel = alert_level || "NORMAL";
@@ -94,8 +94,6 @@ export default function TrendChart({ trend, patientName = "" }) {
   const isCritical = alertLevel === "CRITICAL";
   const gradId     = `tcg-${label?.replace(/\s/g, "")}`;
 
-  // Use the last 30 history points for the chart
-  const chartData = useMemo(() => (history || []).slice(-30), [history]);
   const hasData   = chartData.length >= 2;
 
   // Dynamic Y-axis domain with 10% padding

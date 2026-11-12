@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { X, FileText, User, Activity, FlaskConical, Bell, CheckCircle2, Gauge, AlertTriangle, AlertOctagon } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { X, FileText, Activity, FlaskConical, Bell, CheckCircle2, Gauge } from "lucide-react";
 import ReportSection from "./ReportSection";
 import ReportToolbar from "./ReportToolbar";
 import api from "../../api/axios";
@@ -11,11 +11,7 @@ export default function ReportPreview({ patientId, onClose }) {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    generateReport();
-  }, [reportType]);
-
-  const generateReport = async () => {
+  const generateReport = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -30,7 +26,11 @@ export default function ReportPreview({ patientId, onClose }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [patientId, reportType]);
+
+  useEffect(() => {
+    generateReport();
+  }, [generateReport]);
 
   const handleCopyReport = () => {
     if (!report) return;

@@ -5,6 +5,7 @@ Vital Signs API Endpoints.
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.core.dependencies.rbac import require_permission
 from app.database.session import SessionLocal
 from app.repositories.vital_sign_repository import VitalSignRepository
 from app.schemas.vital_sign import (
@@ -17,6 +18,7 @@ from app.services.vital_sign_service import VitalSignService
 router = APIRouter(
     prefix="/vital-signs",
     tags=["Vital Signs"],
+    dependencies=[Depends(require_permission("Patients"))],
 )
 
 

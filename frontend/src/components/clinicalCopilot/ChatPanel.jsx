@@ -155,7 +155,7 @@ export default function ChatPanel({ patientId }) {
       );
     } catch (err) {
       console.error("Clinical Copilot query failed:", err);
-      setError("Failed to consult the Clinical Copilot. Please check network connectivity.");
+      setError(err?.message || "Failed to consult the Clinical Copilot. Please check network connectivity.");
       setMessages((prev) => prev.filter((msg) => msg.id !== streamId));
     } finally {
       setLoading(false);
