@@ -814,45 +814,9 @@ backend/tests/test_seeder_and_simulator.py::TestSeederAndSimulatorSafety::test_s
 
 ---
 
-## 24. How to Explain IntelliICU in a Technical Interview
 
-Use these structured talking points when presenting IntelliICU to engineering hiring managers:
 
-### 30-Second Elevator Pitch:
-> "IntelliICU is an enterprise Clinical Decision Support Platform designed to mitigate cognitive overload in intensive care units. It streams high-frequency bedside telemetry via WebSockets, evaluates sepsis risk using an ensemble Random Forest model across 13 clinical features, grounds clinical reasoning in peer-reviewed protocols via a 1,608-chunk ChromaDB RAG vector store, and delivers real-time recommendations using a resilient, multi-provider LLM orchestrator that automatically fails over from Groq to Google Gemini."
-
-### 2-Minute Technical Deep Dive:
-> "From an engineering standpoint, IntelliICU addresses three critical challenges in production AI systems: latency, reliability, and hallucination prevention.
-> 
-> First, on latency: bedside telemetry updates continuously at configurable real-time intervals (default 2.0s). We avoid database polling bottlenecks by maintaining persistent WebSockets that push vital drifts directly to client ring-buffers without triggering React re-renders. For the ML pipeline, rather than incurring a 10-second container cold-start deserializing an 809MB model, we built a `LazyModelProxy` that memory-maps the Random Forest weights on the first inference call, allowing our FastAPI containers to start in under a second.
-> 
-> Second, on hallucination: general-purpose LLMs cannot be trusted with unstructured medical queries. We built an offline RAG engine with ChromaDB and BGE-small embeddings indexing 10 authoritative guideline PDFs into 1,608 chunks. When a clinician queries the Copilot, we construct an optimized patient context from PostgreSQL, retrieve the top-3 guideline chunks, and enforce strict negative constraints in the prompt, requiring exact source citations.
-> 
-> Third, on reliability: medical systems cannot drop requests due to an API outage. Our `ProviderOrchestrator` uses Groq's LPU as primary for 300+ token/second speed. If Groq hits rate limits or times out, it automatically fails over to Gemini Flash within the same request lifecycle and streams tokens back to the clinician via Server-Sent Events."
-
-### Common Technical Questions & Answers:
-
-<details>
-<summary><strong>Q: Why did you use a Random Forest model instead of a Deep Neural Network or XGBoost?</strong></summary>
-
-**A:** ICU tabular data typically exhibits complex, non-linear physiological interactions (e.g., tachycardia is benign unless paired with falling systolic BP and rising lactate). Random Forest models with 200 trees are exceptionally resilient to overfitting on correlated clinical features, require minimal scaling artifacts, and produce well-calibrated class probabilities. Additionally, tree ensembles allow straightforward post-hoc explainability and feature importance analysis, which are regulatory requirements in healthcare.
-</details>
-
-<details>
-<summary><strong>Q: How do you handle LLM rate limits and API timeouts in a live hospital setting?</strong></summary>
-
-**A:** We implemented the `ProviderOrchestrator` pattern with active-passive failover. Primary requests go to Groq (`openai/gpt-oss-120b`). If Groq returns an HTTP 429 (Rate Limit), 5xx server error, or exceeds our 30-second timeout, the orchestrator intercepts the exception, records a warning log, and instantly re-routes the prompt to Google Gemini (`gemini-3.8-flash`). In production mode (`AI_ENABLE_MOCK_FALLBACK=false`), if both providers fail, it returns an explicit HTTP 503 rather than hallucinating dangerous mock advice.
-</details>
-
-<details>
-<summary><strong>Q: Why did you build custom RAG orchestration instead of using LangChain chains?</strong></summary>
-
-**A:** While we utilize LangChain's battle-tested `PyPDFLoader` and `RecursiveCharacterTextSplitter` for document extraction and chunking, we deliberately avoided LangChain agent chains for the runtime query pipeline. In critical care systems, black-box agent abstractions add unpredictable latency, complex call stacks, and difficult debugging during mid-stream failures. Our native Python `KnowledgeService` and `ProviderOrchestrator` provide deterministic control over SSE token generation, exact memory budgeting, and explicit error recovery.
-</details>
-
----
-
-## 25. Known Limitations
+## 24. Known Limitations
 
 - **Simulated Physiological Telemetry:** Because access to live hospital patient monitoring networks (Philips IntelliVue / GE Healthcare) is restricted by patient privacy regulations, telemetry drifts are synthesized via a background numerical simulator.
 - **HL7 / FHIR Integration:** The current platform ingests vitals via REST and WebSockets; direct HL7 v2 MLLP feeds or FHIR R4 interfaces are planned for future releases.
@@ -860,7 +824,7 @@ Use these structured talking points when presenting IntelliICU to engineering hi
 
 ---
 
-## 26. Clinical Safety & Compliance Disclaimer
+## 25. Clinical Safety & Compliance Disclaimer
 
 > **IMPORTANT CLINICAL NOTICE:**  
 > IntelliICU is a software engineering reference implementation and research prototype developed for educational, portfolio, and technical demonstration purposes only.
@@ -872,7 +836,7 @@ Use these structured talking points when presenting IntelliICU to engineering hi
 
 ---
 
-## 27. Future Roadmap
+## 26. Future Roadmap
 
 - [ ] **HL7 / FHIR R4 Ingestion Pipeline:** Add native FHIR `Observation` and `Patient` resource listeners.
 - [ ] **Multi-Modal Imaging Integration:** Ingest and visualize chest X-rays (DICOM format) with segmentation overlays.
@@ -881,7 +845,7 @@ Use these structured talking points when presenting IntelliICU to engineering hi
 
 ---
 
-## 28. Author & Contact
+## 27. Author & Contact
 
 **Developed by:** Sumeet  
 **Project Link:** [https://github.com/Sumeet2005/IntelliICU.git](https://github.com/Sumeet2005/IntelliICU.git)  
